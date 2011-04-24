@@ -3,13 +3,24 @@ module Main where
 import Types
 import Locations
 import System.IO (hFlush, stdout)
-import Control.Monad.State (liftIO)
+import Char (toUpper, toLower)
 
-directionsToString :: [Direction] -> String
+directionsToString :: Directions -> String
+directionsToString [] = []
 directionsToString (dir:dirs) = show dir ++ case null(dirs) of
 												True -> []
 												False -> ", " ++ directionsToString dirs
-directionsToString [] = []
+
+upString :: String -> String
+upString str = map toUpper str
+
+getDirection :: String -> Direction
+getDirection x = case upString(x) of
+					"NORTH" -> North
+					"SOUTH" -> South
+					"WEST" -> West
+					"EAST" -> East
+					_ -> NoDirection
 
 describeDirections :: Location -> String
 describeDirections loc = "You can go " ++ directionsToString ( getLocationDirections loc)
@@ -21,7 +32,6 @@ describeGameSituation :: Location -> String
 describeGameSituation loc = do
 						describeDirections loc
 						describeActions loc
-
 
 getAction = do
 				putStr "> "
@@ -38,7 +48,7 @@ run oldLoc = do
 				case x of
 					"Quit" -> return ()
 					"q" -> return ()
-					otherwise -> run . getLocation $ (oldLoc, x)
-			
+					otherwise -> run . waltToDirection $ (oldLoc, getDirection(x))
+
 main :: IO ()
 main = run Room
