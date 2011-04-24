@@ -1,20 +1,24 @@
 module Types where
 
-data Location = Room | NorthRoom | Corridor
+data Room = SouthRoom | NorthRoom | Corridor
 	deriving (Show, Eq)	-- Show позволяет отобразить имя "Room" или "NorthRoom" встроенными средствами.
 						-- Eq позволяет сравнивать эти элементы.
 	
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq)
 
-
-type ShortDescription = String	-- Задание синонима для строки.
-type LongDescription = String
+type Directions = [Direction]
 
 data Path = Path {
     dir :: Direction,
-    toLoc :: Location
+    toLoc :: Room
 } deriving (Eq, Show)
 
 type Paths = [Path]
-type Directions = [Direction]
+
+data Location = Location {
+	paths :: Paths,
+	shortDesc :: String,
+	longDesc :: String
+} deriving (Eq, Show)
+
