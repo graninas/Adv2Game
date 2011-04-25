@@ -2,53 +2,40 @@ module Main where
 
 import Types
 import Locations
-import System.IO (hFlush, stdout)
-import Char (toUpper, toLower)
-
-directionsToString :: Directions -> String
-directionsToString [] = []
-directionsToString (dir:dirs) = show dir ++ case null(dirs) of
-												True -> []
-												False -> ", " ++ directionsToString dirs
-
-upString :: String -> String
-upString str = map toUpper str
-
-getDirection :: String -> Direction
-getDirection x = case upString(x) of
-					"NORTH" -> North
-					"SOUTH" -> South
-					"WEST" -> West
-					"EAST" -> East
-					_ -> NoDirection
-
-describeDirections :: Room -> String
-describeDirections room = "You can go " ++ directionsToString ( getRoomDirections room) ++ "."
+import DirectionsModule
+import Tools
+					
+getCommand :: String -> Command
+getCommand = undefined
 
 describeActions :: Room -> String
 describeActions _ = "You can do something."
 
-describeGameSituation :: Room -> String
+describeGameSituation :: Room -> IO ()
 describeGameSituation room = do
-						describeDirections room
-						describeActions room
+						putStrLn . describeDirections $ room
+						putStrLn . describeActions $ room
+						
+canWalk :: Room -> Direction -> Bool
+canWalk room dir = dir `elem` (getRoomDirections room)
 
-getAction = do
-				putStr "> "
-				hFlush stdout
-				line <- getLine
-				return (line)
+getNewGameState :: Room -> String -> Room
+getNewGameState oldRoom x = case actionCommand $ command of
+								Walk -> if canWalk oldRoom dir then walkBy dir else undefined
+								Look -> undefined
+							where
+								command = getCommand x
+								dir = dirCommand $ command
+
 
 run :: Room -> IO ()
-run oldLoc = do
-				putStrLn . describeLocation $ oldLoc
-				putStrLn . describeDirections $ oldLoc
-				putStrLn . describeActions $ SouthRoom
-				x <- getAction
+run oldRoom = do
+				describeGameSituation oldRoom
+				x <- inputStrCommand
 				case x of
 					"Quit" -> return ()
 					"q" -> return ()
-					otherwise -> run . walkToDirection $ (oldLoc, getDirection(x))
+					otherwise -> run (getNewGameState oldRoom x)
 
 main :: IO ()
 main = run SouthRoom

@@ -19,19 +19,12 @@ location loc = case loc of
 							}
 	otherwise -> Location [] "Undescribed or unknown location" "Undescribed or unknown location"
 
-getPathDirections :: Paths -> Directions
-getPathDirections [] = []
-getPathDirections (x:xs) = [dir $ x] ++ getPathDirections xs
+
 	
 getLocationPaths :: Location -> Paths
 getLocationPaths loc = paths $ loc
 
-getRoomDirections :: Room -> Directions
-getRoomDirections room = getPathDirections . getLocationPaths . location $ room
-	
+
 describeLocation :: Room -> String
 describeLocation x = shortDesc $ (location (x))
-
-walkToDirection :: (Room, Direction) -> Room
-walkToDirection (oldRoom, x) = NorthRoom
 
