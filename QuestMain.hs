@@ -5,8 +5,8 @@ import Locations
 import DirectionsModule
 import Tools
 					
-getCommand :: String -> Command
-getCommand = undefined
+parseStrToCommand :: String -> Command
+parseStrToCommand "" = Command Look NoDirection
 
 describeActions :: Room -> String
 describeActions _ = "You can do something."
@@ -16,15 +16,14 @@ describeGameSituation room = do
 						putStrLn . describeDirections $ room
 						putStrLn . describeActions $ room
 						
-canWalk :: Room -> Direction -> Bool
-canWalk room dir = dir `elem` (getRoomDirections room)
+
 
 getNewGameState :: Room -> String -> Room
 getNewGameState oldRoom x = case actionCommand $ command of
-								Walk -> if canWalk oldRoom dir then walkBy dir else undefined
+								Walk -> if canWalk oldRoom dir then walkToDir oldRoom dir else undefined
 								Look -> undefined
 							where
-								command = getCommand x
+								command = parseStrToCommand x
 								dir = dirCommand $ command
 
 

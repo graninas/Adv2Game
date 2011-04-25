@@ -4,7 +4,7 @@ import Types
 
 
 location :: Room -> Location
-location loc = case loc of
+location room = case room of
 	SouthRoom -> Location {
 							paths = [Path North NorthRoom,
 									Path South SouthRoom],
@@ -26,5 +26,5 @@ getLocationPaths loc = paths $ loc
 
 
 describeLocation :: Room -> String
-describeLocation x = shortDesc $ (location (x))
+describeLocation room = shortDesc $ (location (room))
 

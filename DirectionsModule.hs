@@ -23,9 +23,19 @@ describeDirections room = "You can go " ++ directionsToString (getRoomDirections
 
 getPathDirections :: Paths -> Directions
 getPathDirections [] = []
-getPathDirections (x:xs) = [dir $ x] ++ getPathDirections xs
+getPathDirections (x:xs) = [pathDir $ x] ++ getPathDirections xs
 
 getRoomDirections :: Room -> Directions
 getRoomDirections room = getPathDirections . getLocationPaths . location $ room
-												
-walkBy = undefined
+
+canWalk :: Room -> Direction -> Bool
+canWalk room dir = dir `elem` (getRoomDirections room)
+
+pathOnDirection :: Direction -> Path -> Bool
+pathOnDirection dir p = (pathDir $ p) == dir
+
+pathsOnDirection :: Room -> Direction -> Paths
+pathsOnDirection room dir = filter (pathOnDirection dir) (getLocationPaths . location $ room)
+
+walkToDir :: Room -> Direction -> Room
+walkToDir room dir = pathRoom . head $ (pathsOnDirection room dir)

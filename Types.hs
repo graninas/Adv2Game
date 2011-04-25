@@ -18,8 +18,8 @@ data Command = Command {
 type Directions = [Direction]
 
 data Path = Path {
-    dir :: Direction,
-    toLoc :: Room
+    pathDir :: Direction,
+    pathRoom :: Room
 } deriving (Eq, Show)
 
 type Paths = [Path]
