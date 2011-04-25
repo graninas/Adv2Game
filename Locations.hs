@@ -3,30 +3,35 @@ module Locations where
 import Types
 
 
-locationDescription :: Room -> Location
-locationDescription loc = case loc of
+location :: Room -> Location
+location loc = case loc of
 	SouthRoom -> Location {
-							paths = [Path {dir = North, toLoc = NorthRoom},
-									Path {dir = South, toLoc = SouthRoom}],
+							paths = [Path North NorthRoom,
+									Path South SouthRoom],
 							shortDesc = "This is small dark room.",
 							longDesc = "SouthRoom looks like understair corner."
 							}
 	NorthRoom -> Location {
-							paths = [Path {dir = South, toLoc = SouthRoom},
-									Path {dir = West, toLoc = Corridor}],
+							paths = [Path South SouthRoom,
+									Path West Corridor],
 							shortDesc = "This is big light room.",
 							longDesc = "SouthRoom is the big nice place with many lamps on the walls."
 							}
 	otherwise -> Location [] "Undescribed or unknown location" "Undescribed or unknown location"
 
-getLocationDirections :: Room -> Directions
-getLocationDirections loc = []
+getPathDirections :: Paths -> Directions
+getPathDirections [] = []
+getPathDirections (x:xs) = [dir $ x] ++ getPathDirections xs
+	
+getLocationPaths :: Location -> Paths
+getLocationPaths loc = paths $ loc
+
+getRoomDirections :: Room -> Directions
+getRoomDirections room = getPathDirections . getLocationPaths . location $ room
 	
 describeLocation :: Room -> String
-describeLocation x	| x == SouthRoom = "This is small dark room."
-					| x == NorthRoom = "This is big light room."
-					| otherwise = "No description for this location."
+describeLocation x = shortDesc $ (location (x))
 
-waltToDirection :: (Room, Direction) -> Room
-waltToDirection (oldLoc, x) = NorthRoom
+walkToDirection :: (Room, Direction) -> Room
+walkToDirection (oldRoom, x) = NorthRoom
 

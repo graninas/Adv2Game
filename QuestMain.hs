@@ -23,15 +23,15 @@ getDirection x = case upString(x) of
 					_ -> NoDirection
 
 describeDirections :: Room -> String
-describeDirections loc = "You can go " ++ directionsToString ( getLocationDirections loc)
+describeDirections room = "You can go " ++ directionsToString ( getRoomDirections room) ++ "."
 
 describeActions :: Room -> String
 describeActions _ = "You can do something."
 
 describeGameSituation :: Room -> String
-describeGameSituation loc = do
-						describeDirections loc
-						describeActions loc
+describeGameSituation room = do
+						describeDirections room
+						describeActions room
 
 getAction = do
 				putStr "> "
@@ -48,7 +48,7 @@ run oldLoc = do
 				case x of
 					"Quit" -> return ()
 					"q" -> return ()
-					otherwise -> run . waltToDirection $ (oldLoc, getDirection(x))
+					otherwise -> run . walkToDirection $ (oldLoc, getDirection(x))
 
 main :: IO ()
 main = run SouthRoom
