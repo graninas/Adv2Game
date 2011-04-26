@@ -10,7 +10,9 @@ parseStrToCommand :: String -> IO Command
 parseStrToCommand "" = return (Command Look NoDirection)
 parseStrToCommand x = do
 						let commandWords = words x
-						return (Command (parseAction commandWords) (parseDirection commandWords))
+						let direction = parseDirection commandWords
+						let action = parseAction commandWords direction
+						return (Command action direction)
 
 describeActions :: Room -> String
 describeActions _ = "You can do something."
