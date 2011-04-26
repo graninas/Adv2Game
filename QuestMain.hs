@@ -14,15 +14,11 @@ parseStrToCommand x = do
 						let action = parseAction commandWords direction
 						return (Command action direction)
 
-describeActions :: Room -> String
-describeActions _ = "You can do something."
+describeGameSituation :: GameSituation -> IO ()
+describeGameSituation gameSit = putStrLn (describeLocation (gameRoom $ gameSit) (gameDescribeShort $ gameSit) (gameDescribeLong $ gameSit))
+									
 
-describeGameSituation :: Room -> IO ()
-describeGameSituation room = do
-						putStrLn . describeDirections $ room
-						putStrLn . describeActions $ room
-
-getNewGameSituation :: Room -> Command -> IO GameSituation						
+getNewGameSituation :: Room -> Command -> IO GameSituation
 getNewGameSituation room command = do
 									let direction = commandDir $ command
 									let nextRoom = walkToDir room direction
@@ -32,6 +28,7 @@ getNewGameSituation room command = do
 
 run :: GameSituation -> IO ()
 run oldGameSituation = do
+				describeGameSituation oldGameSituation
 				x <- inputStrCommand
 				c <- parseStrToCommand x
 				putStrLn . show . commandAction $ c
@@ -44,6 +41,4 @@ run oldGameSituation = do
 
 
 main :: IO ()
-main = do
-		describeGameSituation SouthRoom
-		run (GameSituation SouthRoom True False)
+main = run (GameSituation SouthRoom True False)

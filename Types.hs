@@ -32,7 +32,7 @@ data Location = Location {
 
 data GameSituation = GameSituation {
 	gameRoom :: Room,
-	gameDescribeLong :: Bool,
-	gameDescribeShort :: Bool
+	gameDescribeShort :: Bool,
+	gameDescribeLong :: Bool
 } deriving (Eq, Show)
 

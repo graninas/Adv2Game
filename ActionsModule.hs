@@ -21,3 +21,6 @@ parseAction (x:xs) _ = case (action) of
 							NoAction -> parseAction xs NoDirection
 							otherwise -> action
 						where action = actionFromStr x
+
+describeActions :: Room -> String
+describeActions _ = "You can do something."

@@ -25,6 +25,6 @@ getLocationPaths :: Location -> Paths
 getLocationPaths loc = paths $ loc
 
 
-describeLocation :: Room -> String
-describeLocation room = shortDesc . location $ room
+describeLocation :: Room -> Bool -> Bool -> String
+describeLocation room _ _ = shortDesc . location $ room
 
