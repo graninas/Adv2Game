@@ -5,8 +5,11 @@ import Locations
 import DirectionsModule
 import Tools
 					
-parseStrToCommand :: String -> Command
-parseStrToCommand "" = Command Look NoDirection
+parseStrToCommand :: String -> IO Command
+parseStrToCommand "" = return (Command NoAction NoDirection)
+parseStrToCommand "Q" = return (Command Quit NoDirection)
+parseStrToCommand x | isWalkAction x = return (Command Walk (directionFromStrCommand x))
+					| otherwise = undefined
 
 describeActions :: Room -> String
 describeActions _ = "You can do something."
@@ -18,23 +21,20 @@ describeGameSituation room = do
 						
 
 
-getNewGameState :: Room -> String -> Room
-getNewGameState oldRoom x = case actionCommand $ command of
-								Walk -> if canWalk oldRoom dir then walkToDir oldRoom dir else undefined
-								Look -> undefined
-							where
-								command = parseStrToCommand x
-								dir = dirCommand $ command
+getNewGameState :: Room -> Command -> Room
+getNewGameState oldRoom command = undefined
 
 
 run :: Room -> IO ()
 run oldRoom = do
-				describeGameSituation oldRoom
 				x <- inputStrCommand
-				case x of
-					"Quit" -> return ()
-					"q" -> return ()
-					otherwise -> run (getNewGameState oldRoom x)
+				c <- parseStrToCommand (upString x)
+				case commandAction c of
+					Quit -> return ()
+					otherwise -> run (getNewGameState oldRoom c)
+									
 
 main :: IO ()
-main = run SouthRoom
+main = do
+		describeGameSituation SouthRoom
+		run SouthRoom

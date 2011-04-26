@@ -4,13 +4,16 @@ import Types
 import Locations
 import Tools
 
-directionFromCommand :: String -> Direction
-directionFromCommand x = case upString(x) of
+directionFromStrCommand :: String -> Direction
+directionFromStrCommand x = case upString(x) of
 							"NORTH" -> North
 							"SOUTH" -> South
 							"WEST" -> West
 							"EAST" -> East
 							_ -> NoDirection
+							
+isWalkAction :: String -> Bool
+isWalkAction x = if (directionFromStrCommand x) == NoDirection then False else True
 
 directionsToString :: Directions -> String
 directionsToString [] = []

@@ -7,12 +7,12 @@ data Room = SouthRoom | NorthRoom | Corridor
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq)
 	
-data Action = Walk | Look
+data Action = Walk | Look | NoAction | Quit
 	deriving (Show, Eq)
 	
 data Command = Command {
-	actionCommand :: Action,
-	dirCommand :: Direction
+	commandAction :: Action,
+	commandDir :: Direction
 } deriving (Eq, Show)
 
 type Directions = [Direction]
