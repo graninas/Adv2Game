@@ -46,4 +46,8 @@ pathsOnDirection :: Room -> Direction -> Paths
 pathsOnDirection room dir = filter (pathOnDirection dir) (getLocationPaths . location $ room)
 
 walkToDir :: Room -> Direction -> Room
-walkToDir room dir = pathRoom . head $ (pathsOnDirection room dir)
+walkToDir room dir = do
+						let p = pathsOnDirection room dir
+						if null p then room
+						else pathRoom . head $ p
+						
