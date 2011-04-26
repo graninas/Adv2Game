@@ -7,7 +7,7 @@ import ActionsModule
 import Tools
 
 parseStrToCommand :: String -> IO Command
-parseStrToCommand "" = return (Command Look NoDirection)
+parseStrToCommand [] = return (Command NoAction NoDirection)
 parseStrToCommand x = do
 						let commandWords = words x
 						let direction = parseDirection commandWords
@@ -15,8 +15,13 @@ parseStrToCommand x = do
 						return (Command action direction)
 
 describeGameSituation :: GameSituation -> IO ()
-describeGameSituation gameSit = putStrLn (describeLocation (gameRoom $ gameSit) (gameDescribeShort $ gameSit) (gameDescribeLong $ gameSit))
-									
+describeGameSituation gameSit = do
+			putStrLn (describeLocation room isShort isLong)
+			putStrLn (describeDirections room (isShort || isLong))
+			where
+				isShort = gameDescribeShort $ gameSit
+				isLong = gameDescribeLong $ gameSit
+				room = gameRoom $ gameSit
 
 getNewGameSituation :: Room -> Command -> IO GameSituation
 getNewGameSituation room command = do

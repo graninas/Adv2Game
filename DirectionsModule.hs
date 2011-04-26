@@ -25,9 +25,9 @@ directionsToString [] = []
 directionsToString (dir:dirs) = show dir ++ case null(dirs) of
 												True -> []
 												False -> ", " ++ directionsToString dirs
-							
-describeDirections :: Room -> String
-describeDirections room = "You can go " ++ directionsToString (getRoomDirections room) ++ "."
+					
+describeDirections :: Room -> Bool -> String
+describeDirections room _ = "You can go " ++ directionsToString (getRoomDirections room) ++ "."
 
 getPathDirections :: Paths -> Directions
 getPathDirections [] = []

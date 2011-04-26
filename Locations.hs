@@ -28,5 +28,5 @@ getLocationPaths loc = paths $ loc
 describeLocation :: Room -> Bool -> Bool -> String
 describeLocation room isShort isLong =	if isShort then shortDesc . location $ room
 										else if isLong then longDesc . location $ room
-										else ""
+										else []
 
