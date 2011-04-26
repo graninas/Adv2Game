@@ -30,3 +30,9 @@ data Location = Location {
 	longDesc :: String
 } deriving (Eq, Show)
 
+data GameSituation = GameSituation {
+	gameRoom :: Room,
+	gameDescribeLong :: Bool,
+	gameDescribeShort :: Bool
+} deriving (Eq, Show)
+

@@ -22,13 +22,16 @@ describeGameSituation room = do
 						putStrLn . describeDirections $ room
 						putStrLn . describeActions $ room
 
-getNewGameSituation :: Room -> Command -> IO Room						
+getNewGameSituation :: Room -> Command -> IO GameSituation						
 getNewGameSituation room command = do
 									let direction = commandDir $ command
-									return (walkToDir room direction)
+									let nextRoom = walkToDir room direction
+									let describeShort = nextRoom /= room
+									let describeLong = (commandAction $ command) == Look
+									return (GameSituation nextRoom describeShort describeLong)
 
-run :: Room -> IO ()
-run oldRoom = do
+run :: GameSituation -> IO ()
+run oldGameSituation = do
 				x <- inputStrCommand
 				c <- parseStrToCommand x
 				putStrLn . show . commandAction $ c
@@ -36,11 +39,11 @@ run oldRoom = do
 				case commandAction c of
 					Quit -> return ()
 					otherwise -> do
-						newRoom <- getNewGameSituation oldRoom c
-						run newRoom
+						newGameSituation <- getNewGameSituation (gameRoom $ oldGameSituation) c
+						run newGameSituation
 
 
 main :: IO ()
 main = do
 		describeGameSituation SouthRoom
-		run SouthRoom
+		run (GameSituation SouthRoom True False)
