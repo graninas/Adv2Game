@@ -5,7 +5,7 @@ import Locations
 import DirectionsModule
 import ActionsModule
 import Tools
-					
+
 parseStrToCommand :: String -> IO Command
 parseStrToCommand "" = return (Command Look NoDirection)
 parseStrToCommand x = do
@@ -22,9 +22,10 @@ describeGameSituation room = do
 						putStrLn . describeDirections $ room
 						putStrLn . describeActions $ room
 
-getNewGameState :: Room -> Command -> Room
-getNewGameState oldRoom command = undefined
-
+getNewGameSituation :: Room -> Command -> IO Room						
+getNewGameSituation room command = do
+									let direction = commandDir $ command
+									return (walkToDir room direction)
 
 run :: Room -> IO ()
 run oldRoom = do
@@ -34,8 +35,10 @@ run oldRoom = do
 				putStrLn . show . commandDir $ c
 				case commandAction c of
 					Quit -> return ()
-					otherwise -> run (getNewGameState oldRoom c)
-									
+					otherwise -> do
+						newRoom <- getNewGameSituation oldRoom c
+						run newRoom
+
 
 main :: IO ()
 main = do
