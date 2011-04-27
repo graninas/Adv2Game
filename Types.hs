@@ -1,7 +1,7 @@
 module Types where
 
 data Room = SouthRoom | NorthRoom | Corridor
-	deriving (Show, Eq)	-- Show позволяет отобразить имя "Room" или "NorthRoom" встроенными средствами.
+	deriving (Show, Eq)	-- Show позволяет отобразить имя "SouthRoom" или "NorthRoom" встроенными средствами.
 						-- Eq позволяет сравнивать эти элементы.
 	
 data Direction = North | South | West | East | NoDirection
@@ -9,7 +9,7 @@ data Direction = North | South | West | East | NoDirection
 	
 data Action = Walk | Look | NoAction | Quit
 	deriving (Show, Eq)
-	
+
 data Command = Command {
 	commandAction :: Action,
 	commandDir :: Direction

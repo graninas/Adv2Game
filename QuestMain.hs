@@ -15,13 +15,15 @@ parseStrToCommand x = do
 						return (Command action direction)
 
 describeGameSituation :: GameSituation -> IO ()
-describeGameSituation gameSit = do
-			putStrLn (describeLocation room isShort isLong)
-			putStrLn (describeDirections room (isShort || isLong))
+describeGameSituation gameSit =
+			case locDescr of
+				Just locDescr -> putStrLn locDescr
+				Nothing -> return ()
 			where
 				isShort = gameDescribeShort $ gameSit
 				isLong = gameDescribeLong $ gameSit
 				room = gameRoom $ gameSit
+				locDescr = describeLocation room isShort isLong
 
 getNewGameSituation :: Room -> Command -> IO GameSituation
 getNewGameSituation room command = do

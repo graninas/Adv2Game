@@ -24,9 +24,8 @@ location room = case room of
 getLocationPaths :: Location -> Paths
 getLocationPaths loc = paths $ loc
 
-
-describeLocation :: Room -> Bool -> Bool -> String
-describeLocation room isShort isLong =	if isShort then shortDesc . location $ room
-										else if isLong then longDesc . location $ room
-										else []
+describeLocation :: Room -> Bool -> Bool -> Maybe String
+describeLocation room isShort isLong =	if isShort then Just . shortDesc . location $ room
+										else if isLong then Just . longDesc . location $ room
+										else Nothing
 
