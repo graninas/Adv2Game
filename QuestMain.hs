@@ -17,7 +17,8 @@ parseStrToCommand x = do
 describeGameSituation :: GameSituation -> IO ()
 describeGameSituation gameSit =
 			case locDescr of
-				Just locDescr -> putStrLn locDescr
+				Just locDescr -> do
+								putStrLn locDescr
 				Nothing -> return ()
 			where
 				isShort = gameDescribeShort $ gameSit
@@ -38,8 +39,8 @@ run oldGameSituation = do
 				describeGameSituation oldGameSituation
 				x <- inputStrCommand
 				c <- parseStrToCommand x
-				putStrLn . show . commandAction $ c
-				putStrLn . show . commandDir $ c
+				putStrLn . show . commandAction $ c -- В отладочных целях
+				putStrLn . show . commandDir $ c -- В отладочных целях
 				case commandAction c of
 					Quit -> return ()
 					otherwise -> do

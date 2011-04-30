@@ -8,8 +8,8 @@ location room = case room of
 	SouthRoom -> Location {
 							paths = [Path North NorthRoom,
 									Path South SouthRoom],
-							shortDesc = "This is small dark room.",
-							longDesc = "SouthRoom looks like understair corner."
+							shortDesc = "You are standing in the middle room with wooden table.",
+							longDesc = "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. Lightings beats to the lighthouse on a mountain."
 							}
 	NorthRoom -> Location {
 							paths = [Path South SouthRoom,

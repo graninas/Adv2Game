@@ -9,6 +9,11 @@ data Direction = North | South | West | East | NoDirection
 	
 data Action = Walk | Look | NoAction | Quit
 	deriving (Show, Eq)
+	
+data Object =	Phone |
+				Table |
+				Drawer	-- Выдвижной ящик стола
+	deriving (Show, Eq)
 
 data Command = Command {
 	commandAction :: Action,
