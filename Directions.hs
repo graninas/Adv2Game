@@ -1,13 +1,7 @@
 module Directions where
 
 import Types
-import Locations
-import Tools
 
-directionFromStr :: String -> Direction
-directionFromStr x = case upString(x) of
-							"NORTH" -> North
-							"SOUTH" -> South
-							"WEST" -> West
-							"EAST" -> East
-							_ -> NoDirection					
+isExistPaths :: Paths -> Direction -> Bool
+isExistPaths [] _ = False
+isExistPaths (p:ps) dir = if pathDir p == dir then True else isExistPaths ps dir

@@ -49,7 +49,7 @@ data Result = Won | Lost | ContinueGame | QuitGame
 data GameState = GameState {
 	gsWorldMap :: [Location],
 	gsCurrentRoom :: Room
-} 
+}
 	deriving (Show)
 
 newtype GS a = GS { runGameState :: StateT GameState IO a }
