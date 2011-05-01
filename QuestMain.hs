@@ -7,7 +7,7 @@ import Objects
 import Tools
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
-							
+
 
 
 parseCommand :: String -> (Maybe Command, String)
@@ -23,9 +23,9 @@ parseCommand str = case reads capStrings of
 						where wordsAfterCommand = unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
-newGameState :: WorldMap -> Room -> LongDescribedRooms -> Inventory -> GameState
-newGameState newWorldMap newRoom newLongDescribedRooms newInventory = GameState {
-	gsWorldMap = newWorldMap,
+newGameState :: Locations -> Room -> LongDescribedRooms -> Inventory -> GameState
+newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
+	gsLocations = newLocations,
 	gsCurrentRoom = newRoom,
 	gsRoomLongDescribed = newLongDescribedRooms,
 	gsInventory = newInventory}
@@ -36,8 +36,8 @@ canWalk curGS = roomOnDirection (locPaths . location . gsCurrentRoom $ curGS)
 tryWalk dir curGS = do
 	case canWalk curGS dir of
 		Just room -> do
-			put (newGameState (gsWorldMap curGS) room newLongDescribedRooms (gsInventory curGS))
-			ioOutMsg $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsWorldMap curGS) room))
+			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInventory curGS))
+			ioOutMsg $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room))
 			return ContinueGame
 				where
 					roomsDescribedEarlier = gsRoomLongDescribed curGS
@@ -49,9 +49,14 @@ tryPickup obj curGS = do
 	case tryRiseObject obj of
 		(Nothing, str) -> (ioOutMsg $ str) >> return ContinueGame
 		(Just x, _) -> do
-			put (newGameState (gsWorldMap curGS) (gsCurrentRoom curGS) (gsRoomLongDescribed curGS) (addToInventory (gsInventory curGS) obj))
+			put (newGameState (locationsWithoutObject curLocs curRoom obj) curRoom curRoomLongDescribed (addToInventory curInventory obj))
 			return ContinueGame
-	
+		where
+			curLocs = gsLocations curGS
+			curRoom = gsCurrentRoom curGS
+			curInventory = gsInventory curGS
+			curRoomLongDescribed = gsRoomLongDescribed curGS
+
 
 run :: GS Result
 run = do
@@ -59,7 +64,7 @@ run = do
 	strCmd <- liftIO inputStrCommand
 	let parsedCmdWithContext = parseCommand strCmd
 	let currentRoom = gsCurrentRoom $ curGS
-	let roomObjects =  locationObjects (gsWorldMap curGS) currentRoom
+	let roomObjects =  locationObjects (gsLocations curGS) currentRoom
 	let inventory = gsInventory curGS
 	case parsedCmdWithContext of
 		(Nothing, str) -> (ioOutMsg $ str) >> run

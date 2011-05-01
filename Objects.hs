@@ -3,7 +3,7 @@ module Objects where
 import Types
 
 isPickupable :: Object -> Bool
-isPickupable = flip elem [Umbrella]	-- По образу и подобию Advgame.
+isPickupable = flip elem [Umbrella, Table]	-- По образу и подобию Advgame.
 
 notVisibleObjectError :: Object -> String
 notVisibleObjectError obj = "You don't see any " ++ show obj ++ " here."

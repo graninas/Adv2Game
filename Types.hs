@@ -52,14 +52,13 @@ data Location = Location {
 } deriving (Eq, Show)
 
 type Locations = [Location]
-type WorldMap = Locations
 
 -- Новый вариант состояния игры. Создан по примеру Advgame.
 data Result = Won | Lost | ContinueGame | QuitGame
     deriving (Eq)
 
 data GameState = GameState {
-	gsWorldMap :: WorldMap,
+	gsLocations :: Locations,
 	gsCurrentRoom :: Room,
 	gsRoomLongDescribed :: LongDescribedRooms, -- Если длинное описание уже выводилось, то второй раз оно не будет выводиться. Только по команде Look. В списке gsRoomLongDescribed содержатся уже описанные комнаты.
 	gsInventory :: Inventory

@@ -23,7 +23,7 @@ location room = case room of
 
 initWorld :: GameState
 initWorld = GameState {
-	gsWorldMap = [location SouthRoom, location NorthRoom],
+	gsLocations = [location SouthRoom, location NorthRoom],
 	gsCurrentRoom = SouthRoom,
 	gsRoomLongDescribed = [SouthRoom],
 	gsInventory = []
@@ -42,3 +42,14 @@ describeObjects objects = "\nThere are some objects here: " ++ show objects
 describeLocation :: Bool -> Room -> Objects -> String
 describeLocation False room objects = (locLongDesc . location $ room) ++ describeObjects objects
 describeLocation True  room objects = (locShortDesc . location $ room) ++ describeObjects objects
+
+locationWithoutObject loc obj = Location {
+		locRoom = locRoom loc,
+		locPaths = locPaths loc,
+		locShortDesc = locShortDesc loc,
+		locLongDesc = locLongDesc loc,
+		locObjects = filter (/=obj) (locObjects loc)}
+
+locationsWithoutObject :: Locations -> Room -> Object -> Locations
+locationsWithoutObject [] _ _ = []
+locationsWithoutObject (l:locs) room obj = if locRoom l == room then locationWithoutObject l obj : locs else l : locationsWithoutObject locs room obj
