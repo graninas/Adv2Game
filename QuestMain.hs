@@ -14,7 +14,7 @@ parseCommand str = case reads capStrings of
 						"Q" -> Just Quit
 						_ -> Nothing
 	where capStrings = capitalize $ str
-	
+
 
 
 canWalk :: GameState -> Direction -> Maybe Room
@@ -25,7 +25,7 @@ tryWalk dir = do
 	case canWalk curGS dir of
 		Just room -> do
 			put (GameState {gsWorldMap = (gsWorldMap curGS), gsCurrentRoom = room, gsRoomLongDescribed = newLongDescribedRooms})
-			liftIO $ putStrLn $ (describeLocation roomAlreadyLongDescribed room)
+			liftIO $ putStrLn $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsWorldMap curGS) room))
 			return ContinueGame
 				where
 					roomsDescribedEarlier = gsRoomLongDescribed curGS
@@ -39,15 +39,20 @@ run = do
 	curGS <- get
 	strCmd <- liftIO inputStrCommand
 	let parsedCmd = parseCommand strCmd
+	let currentRoom = gsCurrentRoom $ curGS
+	let roomObjects =  locationObjects (gsWorldMap curGS) currentRoom
 	case parsedCmd of
 		Just Quit -> return QuitGame
-		Just Look -> (liftIO . putStrLn . lookAround . gsCurrentRoom $ curGS) >> run
+		Just Look -> liftIO (putStrLn (lookAround currentRoom roomObjects)) >> run
 		Just (Go dir) -> (tryWalk dir) >> run
 		Just (Walk dir) -> (tryWalk dir) >> run
 		Nothing -> (liftIO . putStrLn . show $ parsedCmd) >> run
 
 main :: IO ()
 main = do
-	putStrLn . lookAround . gsCurrentRoom $ initWorld
+	putStrLn $ lookAround startRoom startRoomObjects
 	x <- evalStateT (runGameState run) initWorld
 	putStrLn "End."
+		where
+			startRoom = gsCurrentRoom $ initWorld
+			startRoomObjects = locObjects . location $ startRoom

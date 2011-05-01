@@ -6,16 +6,20 @@ import Types
 location :: Room -> Location
 location room = case room of
 	SouthRoom -> Location {
+							locRoom = SouthRoom,
 							locPaths = [Path North NorthRoom, Path South SouthRoom],
 							locShortDesc = "You are standing in the middle room with wooden table.",
-							locLongDesc = "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. Lightings beats to the lighthouse on a mountain."
+							locLongDesc = "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. Lightings beats to the lighthouse on a mountain.",
+							locObjects = [Drawer, Phone, Table]
 							}
 	NorthRoom -> Location {
+							locRoom = NorthRoom,
 							locPaths = [Path South SouthRoom, Path West Corridor],
 							locShortDesc = "This is big light room.",
-							locLongDesc = "SouthRoom is the big nice place with many lamps on the walls."
+							locLongDesc = "SouthRoom is the big nice place with many lamps on the walls.",
+							locObjects = []
 							}
-	otherwise -> Location [] "Undescribed or unknown location" "Undescribed or unknown location"
+	otherwise -> Location { locRoom = NoRoom, locPaths = [], locShortDesc = "Invalid room.", locLongDesc = "Invalid room", locObjects = [] }
 
 initWorld :: GameState
 initWorld = GameState {
@@ -24,12 +28,20 @@ initWorld = GameState {
 	gsRoomLongDescribed = [SouthRoom]
 }
 
-lookAround :: Room -> String
-lookAround = locLongDesc . location
+lookAround :: Room -> Objects -> String
+lookAround room objects = (locLongDesc . location $ room) ++ (describeObjects objects)
 
 isRoomLongDescribed :: Rooms -> Room -> Bool
 isRoomLongDescribed rooms room = room `elem` rooms
 
-describeLocation :: Bool -> Room -> String
-describeLocation False = locLongDesc . location
-describeLocation True = locShortDesc . location
+describeObjects :: Objects -> String
+describeObjects [] = []
+describeObjects objects = "\nThere are some objects here: " ++ show objects
+
+describeLocation :: Bool -> Room -> Objects -> String
+describeLocation False room objects = (locLongDesc . location $ room) ++ describeObjects objects
+describeLocation True  room objects = (locShortDesc . location $ room) ++ describeObjects objects
+
+locationObjects :: Locations -> Room -> Objects
+locationObjects [] _ = []
+locationObjects (x:xs) room = if room == locRoom x then locObjects x else locationObjects xs room

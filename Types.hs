@@ -4,7 +4,7 @@ module Types where
 import Control.Monad (mapM_)
 import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..))
 							
-data Room = SouthRoom | NorthRoom | Corridor
+data Room = SouthRoom | NorthRoom | Corridor | NoRoom
 	deriving (Show, Eq)	-- Show позволяет отобразить имя "SouthRoom" или "NorthRoom" встроенными средствами.
 						-- Eq позволяет сравнивать эти элементы.
 type Rooms = [Room]
@@ -13,10 +13,13 @@ type Rooms = [Room]
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
 	
-data Object =	Phone |
-				Table |
-				Drawer	-- Выдвижной ящик стола
+data Object =
+			Phone
+			| Table
+			| Drawer	-- Выдвижной ящик стола
 	deriving (Show, Eq, Read)
+	
+type Objects = [Object]
 
 data Command =
 			Walk Direction
@@ -37,18 +40,21 @@ data Path = Path {
 type Paths = [Path]
 
 data Location = Location {
+	locRoom :: Room,
 	locPaths :: Paths,
 	locShortDesc :: String,
-	locLongDesc :: String
+	locLongDesc :: String,
+	locObjects :: Objects
 } deriving (Eq, Show)
 
+type Locations = [Location]
 
 -- Новый вариант состояния игры. Создан по примеру Advgame.
 data Result = Won | Lost | ContinueGame | QuitGame
     deriving (Eq)
 
 data GameState = GameState {
-	gsWorldMap :: [Location],
+	gsWorldMap :: Locations,
 	gsCurrentRoom :: Room,
 	gsRoomLongDescribed :: Rooms -- Если длинное описание уже выводилось, то второй раз оно не будет выводиться. Только по команде Look.
 }
