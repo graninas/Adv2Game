@@ -12,7 +12,7 @@ capitalize str = unwords (map capitalize' (words str))
 	where capitalize' (x:xs) = (toUpper x) : map toLower xs
 
 inputStrCommand = do
-				putStr "> "
+				putStr "> "	-- Код взят из Advgame.
 				hFlush stdout
 				line <- getLine
 				return (line)

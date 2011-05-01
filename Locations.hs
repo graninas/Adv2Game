@@ -25,7 +25,8 @@ initWorld :: GameState
 initWorld = GameState {
 	gsWorldMap = [location SouthRoom, location NorthRoom],
 	gsCurrentRoom = SouthRoom,
-	gsRoomLongDescribed = [SouthRoom]
+	gsRoomLongDescribed = [SouthRoom],
+	gsInventory = []
 }
 
 lookAround :: Room -> Objects -> String

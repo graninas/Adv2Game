@@ -8,7 +8,7 @@ data Room = SouthRoom | NorthRoom | Corridor | NoRoom
 	deriving (Show, Eq)	-- Show позвол€ет отобразить им€ "SouthRoom" или "NorthRoom" встроенными средствами.
 						-- Eq позвол€ет сравнивать эти элементы.
 type Rooms = [Room]
-
+type LongDescribedRooms = Rooms
 
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
@@ -21,6 +21,7 @@ data Object =
 	deriving (Show, Eq, Read)
 	
 type Objects = [Object]
+type Inventory = Objects
 
 data Command =
 			Walk Direction
@@ -51,15 +52,17 @@ data Location = Location {
 } deriving (Eq, Show)
 
 type Locations = [Location]
+type WorldMap = Locations
 
 -- Ќовый вариант состо€ни€ игры. —оздан по примеру Advgame.
 data Result = Won | Lost | ContinueGame | QuitGame
     deriving (Eq)
 
 data GameState = GameState {
-	gsWorldMap :: Locations,
+	gsWorldMap :: WorldMap,
 	gsCurrentRoom :: Room,
-	gsRoomLongDescribed :: Rooms -- ≈сли длинное описание уже выводилось, то второй раз оно не будет выводитьс€. “олько по команде Look.
+	gsRoomLongDescribed :: LongDescribedRooms, -- ≈сли длинное описание уже выводилось, то второй раз оно не будет выводитьс€. “олько по команде Look. ¬ списке gsRoomLongDescribed содержатс€ уже описанные комнаты.
+	gsInventory :: Inventory
 }
 	deriving (Show)
 
