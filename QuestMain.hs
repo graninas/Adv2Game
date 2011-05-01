@@ -6,18 +6,20 @@ import Directions
 import Objects
 import Tools
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
-                            liftIO, put, MonadState(..), MonadIO(..))
+                            put, MonadState(..), liftIO)
+							
 
-parseCommand :: String -> Maybe Command
-parseCommand [] = Nothing
+
+parseCommand :: String -> (Maybe Command, String)
+parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
-					[(x,"")] -> Just x
+					[(x,"")] -> (Just x, [])
 					_ -> case head capStrings of
-						'Q' -> Just Quit
+						'Q' -> (Just Quit, "Be seen you...")
 						'P' -> case reads wordsAfterCommand of
-							[(y,"")] -> Just (Pickup y)
-							_ -> Nothing
-						_ -> Nothing
+							[(y,"")] -> (Just (Pickup y), [])
+							_ -> (Nothing, "Pickup what?")
+						_ -> (Nothing, "Can't understand a command.")
 						where wordsAfterCommand = unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
@@ -35,7 +37,7 @@ tryWalk dir curGS = do
 	case canWalk curGS dir of
 		Just room -> do
 			put (newGameState (gsWorldMap curGS) room newLongDescribedRooms (gsInventory curGS))
-			liftIO $ putStrLn $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsWorldMap curGS) room))
+			ioOutMsg $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsWorldMap curGS) room))
 			return ContinueGame
 				where
 					roomsDescribedEarlier = gsRoomLongDescribed curGS
@@ -45,7 +47,7 @@ tryWalk dir curGS = do
 
 tryPickup obj curGS = do
 	case tryRiseObject obj of
-		(Nothing, str) -> (liftIO . putStrLn $ str) >> return ContinueGame
+		(Nothing, str) -> (ioOutMsg $ str) >> return ContinueGame
 		(Just x, _) -> do
 			put (newGameState (gsWorldMap curGS) (gsCurrentRoom curGS) (gsRoomLongDescribed curGS) (addToInventory (gsInventory curGS) obj))
 			return ContinueGame
@@ -55,23 +57,25 @@ run :: GS Result
 run = do
 	curGS <- get
 	strCmd <- liftIO inputStrCommand
-	let parsedCmd = parseCommand strCmd
+	let parsedCmdWithContext = parseCommand strCmd
 	let currentRoom = gsCurrentRoom $ curGS
 	let roomObjects =  locationObjects (gsWorldMap curGS) currentRoom
 	let inventory = gsInventory curGS
-	case parsedCmd of
-		Just Quit -> return QuitGame
-		Just Look -> liftIO (putStrLn (lookAround currentRoom roomObjects)) >> run
-		Just (Go dir) -> (tryWalk dir curGS) >> run
-		Just (Walk dir) -> (tryWalk dir curGS) >> run
-		Just (Pickup obj) -> if canSeeObject obj roomObjects then (tryPickup obj curGS) >> run else (liftIO . putStrLn . notVisibleObjectError $ obj) >> run
-		Nothing -> (liftIO . putStrLn . show $ parsedCmd) >> run
+	case parsedCmdWithContext of
+		(Nothing, str) -> (ioOutMsg $ str) >> run
+		(parsedCmd, str) -> case parsedCmd of
+			Just Quit -> ioOutMsg str >> return QuitGame
+			Just Look -> ioOutMsg (lookAround currentRoom roomObjects) >> run
+			Just (Go dir) -> (tryWalk dir curGS) >> run
+			Just (Walk dir) -> (tryWalk dir curGS) >> run
+			Just (Pickup obj) -> if canSeeObject obj roomObjects then (tryPickup obj curGS) >> run else (ioOutMsg . notVisibleObjectError $ obj) >> run
+			Nothing -> (ioOutMsg . show $ parsedCmd) >> run
 
 main :: IO ()
 main = do
 	putStrLn $ lookAround startRoom startRoomObjects
 	x <- evalStateT (runGameState run) initWorld
-	putStrLn "End."
+	putStrLn ""
 		where
 			startRoom = gsCurrentRoom $ initWorld
 			startRoomObjects = locObjects . location $ startRoom

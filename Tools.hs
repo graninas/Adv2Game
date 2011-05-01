@@ -3,6 +3,9 @@ module Tools where
 
 import Char (toUpper, toLower)
 import System.IO (hFlush, stdout)
+import Control.Monad.State ({-get, gets, StateT(..), evalStateT, 
+                            put, MonadState(..), -}liftIO, MonadIO(..))
+import Types
 
 upString :: String -> String
 upString str = map toUpper str
@@ -16,3 +19,6 @@ inputStrCommand = do
 				hFlush stdout
 				line <- getLine
 				return (line)
+ 
+ioOutMsg :: String -> GS ()
+ioOutMsg = liftIO . putStrLn
