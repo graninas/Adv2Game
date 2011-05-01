@@ -2,6 +2,6 @@ module Directions where
 
 import Types
 
-isExistPaths :: Paths -> Direction -> Bool
-isExistPaths [] _ = False
-isExistPaths (p:ps) dir = if pathDir p == dir then True else isExistPaths ps dir
+roomOnDirection :: Paths -> Direction -> Maybe Room
+roomOnDirection [] _ = Nothing
+roomOnDirection (p:ps) dir = if pathDir p == dir then Just . pathRoom $ p else roomOnDirection ps dir

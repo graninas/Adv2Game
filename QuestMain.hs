@@ -15,15 +15,14 @@ parseCommand str = case reads capStrings of
 						_ -> Nothing
 	where capStrings = capitalize $ str
 
-canWalk :: GameState -> Direction -> Bool
-canWalk curGS = isExistPaths (locPaths . location . gsCurrentRoom $ curGS)
-walk = undefined
-	
+canWalk :: GameState -> Direction -> Maybe Room
+canWalk curGS = roomOnDirection (locPaths . location . gsCurrentRoom $ curGS)
+
 tryWalk dir = do
 	curGS <- get
 	case canWalk curGS dir of
-		True -> return (Just GameState { gsWorldMap = (gsWorldMap curGS), gsCurrentRoom = (walk dir) })
-		False -> return Nothing
+		Just room -> put (GameState {gsWorldMap = (gsWorldMap curGS), gsCurrentRoom = room}) >> return ContinueGame
+		Nothing -> return ContinueGame
 
 run :: GS Result
 run = do
