@@ -22,7 +22,7 @@ data Command =
 			| Investigate Object
 			| Go Direction
 			| Quit
-			| ErrorCommand
+			| Help
 	deriving (Eq, Show, Read)
 
 type Directions = [Direction]
