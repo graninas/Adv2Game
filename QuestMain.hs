@@ -21,11 +21,8 @@ run = do
 	let parsedCmd = parseCommand strCmd
 	case parsedCmd of
 		Just Quit -> return QuitGame
-		Nothing -> do
-			liftIO $ putStrLn $ show $ parsedCmd
-			run
-	
-
+		Just x -> (liftIO $ putStrLn $ show $ parsedCmd) >> run
+		Nothing -> (liftIO $ putStrLn $ show $ parsedCmd) >> run
 
 main :: IO ()
 main = do

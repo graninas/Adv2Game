@@ -8,7 +8,8 @@ upString :: String -> String
 upString str = map toUpper str
 
 capitalize :: String -> String
-capitalize (x:xs) = (toUpper x) : map toLower xs
+capitalize str = unwords (map capitalize' (words str))
+	where capitalize' (x:xs) = (toUpper x) : map toLower xs
 
 inputStrCommand = do
 				putStr "> "
