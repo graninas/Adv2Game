@@ -27,3 +27,5 @@ initWorld = GameState {
 	gsCurrentRoom = SouthRoom
 }
 
+lookAround :: Room -> String
+lookAround = locLongDesc . location

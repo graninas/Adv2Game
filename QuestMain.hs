@@ -15,7 +15,14 @@ parseCommand str = case reads capStrings of
 						_ -> Nothing
 	where capStrings = capitalize $ str
 
-seeAround = locLongDesc . location
+canWalk = undefined
+walk = undefined
+	
+tryWalk dir = do
+	curGS <- get
+	case canWalk (gsCurrentRoom $ curGS) dir of
+		True -> return (Just GameState { gsWorldMap = (gsWorldMap curGS), gsCurrentRoom = (walk dir) })
+		False -> return Nothing
 
 run :: GS Result
 run = do
@@ -24,10 +31,12 @@ run = do
 	let parsedCmd = parseCommand strCmd
 	case parsedCmd of
 		Just Quit -> return QuitGame
-		Just Look -> (liftIO . putStrLn . seeAround . gsCurrentRoom $ curGS) >> run
-		Nothing -> (liftIO $ putStrLn $ show $ parsedCmd) >> run
+		Just Look -> (liftIO . putStrLn . lookAround . gsCurrentRoom $ curGS) >> run
+		Just (Go dir) -> (tryWalk dir) >> run
+		Nothing -> (liftIO . putStrLn . show $ parsedCmd) >> run
 
 main :: IO ()
 main = do
+	putStrLn . lookAround . gsCurrentRoom $ initWorld
 	x <- evalStateT (runGameState run) initWorld
 	putStrLn "End."
