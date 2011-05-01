@@ -7,7 +7,9 @@ import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..))
 data Room = SouthRoom | NorthRoom | Corridor
 	deriving (Show, Eq)	-- Show позволяет отобразить имя "SouthRoom" или "NorthRoom" встроенными средствами.
 						-- Eq позволяет сравнивать эти элементы.
-	
+type Rooms = [Room]
+
+
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
 	
@@ -37,8 +39,7 @@ type Paths = [Path]
 data Location = Location {
 	locPaths :: Paths,
 	locShortDesc :: String,
-	locLongDesc :: String,
-	locLongDescribed :: Bool	-- Если длинное описание уже выводилось, то второй раз оно не будет выводиться. Только по команде Look.
+	locLongDesc :: String
 } deriving (Eq, Show)
 
 
@@ -48,7 +49,8 @@ data Result = Won | Lost | ContinueGame | QuitGame
 
 data GameState = GameState {
 	gsWorldMap :: [Location],
-	gsCurrentRoom :: Room
+	gsCurrentRoom :: Room,
+	gsRoomLongDescribed :: Rooms -- Если длинное описание уже выводилось, то второй раз оно не будет выводиться. Только по команде Look.
 }
 	deriving (Show)
 

@@ -14,6 +14,8 @@ parseCommand str = case reads capStrings of
 						"Q" -> Just Quit
 						_ -> Nothing
 	where capStrings = capitalize $ str
+	
+
 
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk curGS = roomOnDirection (locPaths . location . gsCurrentRoom $ curGS)
@@ -21,8 +23,16 @@ canWalk curGS = roomOnDirection (locPaths . location . gsCurrentRoom $ curGS)
 tryWalk dir = do
 	curGS <- get
 	case canWalk curGS dir of
-		Just room -> put (GameState {gsWorldMap = (gsWorldMap curGS), gsCurrentRoom = room}) >> return ContinueGame
+		Just room -> do
+			put (GameState {gsWorldMap = (gsWorldMap curGS), gsCurrentRoom = room, gsRoomLongDescribed = newLongDescribedRooms})
+			liftIO $ putStrLn $ (describeLocation roomAlreadyLongDescribed room)
+			return ContinueGame
+				where
+					roomsDescribedEarlier = gsRoomLongDescribed curGS
+					roomAlreadyLongDescribed = isRoomLongDescribed roomsDescribedEarlier room
+					newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
 		Nothing -> return ContinueGame
+
 
 run :: GS Result
 run = do
