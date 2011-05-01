@@ -17,6 +17,7 @@ data Object =
 			Phone
 			| Table
 			| Drawer	-- Выдвижной ящик стола
+			| Umbrella
 	deriving (Show, Eq, Read)
 	
 type Objects = [Object]
@@ -26,6 +27,8 @@ data Command =
 			| Look
 			| Investigate Object
 			| Go Direction
+			| Use Object
+			| Pickup Object
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)

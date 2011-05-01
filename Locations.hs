@@ -41,7 +41,3 @@ describeObjects objects = "\nThere are some objects here: " ++ show objects
 describeLocation :: Bool -> Room -> Objects -> String
 describeLocation False room objects = (locLongDesc . location $ room) ++ describeObjects objects
 describeLocation True  room objects = (locShortDesc . location $ room) ++ describeObjects objects
-
-locationObjects :: Locations -> Room -> Objects
-locationObjects [] _ = []
-locationObjects (x:xs) room = if room == locRoom x then locObjects x else locationObjects xs room

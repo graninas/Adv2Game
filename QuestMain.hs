@@ -3,16 +3,22 @@ module Main where
 import Types
 import Locations
 import Directions
+import Objects
 import Tools
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             liftIO, put, MonadState(..), MonadIO(..))
-			
+
 parseCommand :: String -> Maybe Command
+parseCommand [] = Nothing
 parseCommand str = case reads capStrings of
 					[(x,"")] -> Just x
-					_ -> case capStrings of
-						"Q" -> Just Quit
+					_ -> case head capStrings of
+						'Q' -> Just Quit
+						'P' -> case wordsAfterCommand of
+							[(y,"")] -> Just (Pickup y)
+							_ -> Nothing
 						_ -> Nothing
+						where wordsAfterCommand = reads . unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
 
