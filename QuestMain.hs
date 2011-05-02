@@ -16,6 +16,7 @@ parseCommand str = case reads capStrings of
 					[(x,"")] -> (Just x, [])
 					_ -> case head capStrings of
 						'Q' -> (Just Quit, "Be seen you...")
+						'I' -> (Just Inventory, [])
 						'P' -> case reads wordsAfterCommand of
 							[(y,"")] -> (Just (Pickup y), [])
 							_ -> (Nothing, "Pickup what?")
@@ -48,7 +49,8 @@ tryWalk dir curGS = do
 tryPickup obj curGS = do
 	case tryRiseObject obj of
 		(Nothing, str) -> (ioOutMsg $ str) >> return ContinueGame
-		(Just x, _) -> do
+		(Just x, str) -> do
+			(ioOutMsg $ str)
 			put (newGameState (locationsWithoutObject curLocs curRoom obj) curRoom curRoomLongDescribed (addToInventory curInventory obj))
 			return ContinueGame
 		where
@@ -71,6 +73,7 @@ run = do
 		(parsedCmd, str) -> case parsedCmd of
 			Just Quit -> ioOutMsg str >> return QuitGame
 			Just Look -> ioOutMsg (lookAround currentRoom roomObjects) >> run
+			Just Inventory -> (ioOutMsg . showInventory $ inventory) >> run
 			Just (Go dir) -> (tryWalk dir curGS) >> run
 			Just (Walk dir) -> (tryWalk dir curGS) >> run
 			Just (Pickup obj) -> if canSeeObject obj roomObjects then (tryPickup obj curGS) >> run else (ioOutMsg . notVisibleObjectError $ obj) >> run

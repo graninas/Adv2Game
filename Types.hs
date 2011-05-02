@@ -27,6 +27,7 @@ data Command =
 			Walk Direction
 			| Look
 			| Investigate Object
+			| Inventory
 			| Go Direction
 			| Use Object
 			| Pickup Object
