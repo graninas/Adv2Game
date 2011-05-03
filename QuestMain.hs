@@ -74,10 +74,14 @@ run = do
 			Just Quit -> ioOutMsg str >> return QuitGame
 			Just Look -> ioOutMsg (lookAround currentRoom roomObjects) >> run
 			Just Inventory -> (ioOutMsg . showInventory $ inventory) >> run
+			Just (Investigate obj) -> if canSeeObj obj then (ioOutMsg . investigateObject $ obj) >> run else (noVisObjMsg obj) >> run
 			Just (Go dir) -> (tryWalk dir curGS) >> run
 			Just (Walk dir) -> (tryWalk dir curGS) >> run
-			Just (Pickup obj) -> if canSeeObject obj roomObjects then (tryPickup obj curGS) >> run else (ioOutMsg . notVisibleObjectError $ obj) >> run
+			Just (Pickup obj) -> if canSeeObj obj then (tryPickup obj curGS) >> run else (noVisObjMsg obj) >> run
 			Nothing -> (ioOutMsg . show $ parsedCmd) >> run
+			where
+				canSeeObj = canSeeObject (roomObjects ++ inventory)
+				noVisObjMsg = ioOutMsg . notVisibleObjectError
 
 main :: IO ()
 main = do
