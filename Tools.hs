@@ -11,7 +11,7 @@ upString :: String -> String
 upString str = map toUpper str
 
 capitalize :: String -> String
-capitalize str = unwords (map capitalize' (words str))
+capitalize = unwords . map capitalize' . words
 	where capitalize' (x:xs) = (toUpper x) : map toLower xs
 
 inputStrCommand = do

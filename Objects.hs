@@ -15,9 +15,6 @@ pickupFailMessage obj = "\nYou can't take a " ++ show obj ++ "."
 tryRiseObject :: Object -> (Maybe Object, String)
 tryRiseObject obj = if isPickupable obj then (Just obj, show obj ++ " added to your inventory.") else (Nothing, pickupFailMessage obj)
 
-addToInventory :: Inventory -> Object -> Inventory
-addToInventory inv obj = obj : inv
-
 locationObjects :: Locations -> Room -> Objects
 locationObjects [] _ = []
 locationObjects (x:xs) room = if room == locRoom x then locObjects x else locationObjects xs room

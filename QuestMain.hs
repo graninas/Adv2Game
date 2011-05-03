@@ -32,7 +32,7 @@ newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState
 	gsInventory = newInventory}
 
 canWalk :: GameState -> Direction -> Maybe Room
-canWalk curGS = roomOnDirection (locPaths . location . gsCurrentRoom $ curGS)
+canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
 tryWalk dir curGS = do
 	case canWalk curGS dir of
@@ -51,7 +51,7 @@ tryPickup obj curGS = do
 		(Nothing, str) -> (ioOutMsg $ str) >> return ContinueGame
 		(Just x, str) -> do
 			(ioOutMsg $ str)
-			put (newGameState (locationsWithoutObject curLocs curRoom obj) curRoom curRoomLongDescribed (addToInventory curInventory obj))
+			put (newGameState (locationsWithoutObject curLocs curRoom obj) curRoom curRoomLongDescribed (obj : curInventory))
 			return ContinueGame
 		where
 			curLocs = gsLocations curGS
@@ -59,14 +59,14 @@ tryPickup obj curGS = do
 			curInventory = gsInventory curGS
 			curRoomLongDescribed = gsRoomLongDescribed curGS
 
-
+			
 run :: GS Result
 run = do
 	curGS <- get
 	strCmd <- liftIO inputStrCommand
 	let parsedCmdWithContext = parseCommand strCmd
 	let currentRoom = gsCurrentRoom $ curGS
-	let roomObjects =  locationObjects (gsLocations curGS) currentRoom
+	let roomObjects = locationObjects (gsLocations curGS) currentRoom
 	let inventory = gsInventory curGS
 	case parsedCmdWithContext of
 		(Nothing, str) -> (ioOutMsg $ str) >> run
