@@ -9,8 +9,8 @@ location room = case room of
 							locRoom = SouthRoom,
 							locPaths = [Path North NorthRoom, Path South SouthRoom],
 							locShortDesc = "You are standing in the middle room at the wooden table.",
-							locLongDesc = "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. Lightnings beats to the lighthouse on a mountain.",
-							locObjects = [Drawer, Phone, Table]
+							locLongDesc = "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. A lightnings beat to the lighthouse on a mountain.",
+							locObjects = [Drawer, Phone, Table, Umbrella]
 							}
 	NorthRoom -> Location {
 							locRoom = NorthRoom,

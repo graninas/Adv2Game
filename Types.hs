@@ -29,12 +29,11 @@ data Command =
 			| Investigate Object
 			| Inventory
 			| Go Direction
-			| Use Object
 			| Pickup Object
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
-
+	
 type Directions = [Direction]
 
 data Path = Path {

@@ -18,7 +18,7 @@ parseCommand str = case reads capStrings of
 						'Q' -> (Just Quit, "Be seen you...")
 						'I' -> (Just Inventory, [])
 						'P' -> case reads wordsAfterCommand of
-							[(y,"")] -> (Just (Pickup y), [])
+							[(y, "")] -> (Just (Pickup y), [])
 							_ -> (Nothing, "Pickup what?")
 						_ -> (Nothing, "Can't understand a command.")
 						where wordsAfterCommand = unwords . tail . words $ capStrings
@@ -59,7 +59,6 @@ tryPickup obj curGS = do
 			curInventory = gsInventory curGS
 			curRoomLongDescribed = gsRoomLongDescribed curGS
 
-			
 run :: GS Result
 run = do
 	curGS <- get
