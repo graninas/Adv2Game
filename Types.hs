@@ -13,23 +13,31 @@ type LongDescribedRooms = Rooms
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
 	
-data Object =
+data ItemName =
 			Phone
 			| Table
 			| Drawer	-- Выдвижной ящик стола
 			| Umbrella
 	deriving (Show, Eq, Read)
 	
+type Item = (ItemName, Int)
+
+data Object = Object {
+	oItem :: Item,
+	oDescription :: String,
+	oPickupFailMsg :: String
+}
+
 type Objects = [Object]
 type Inventory = Objects
 
 data Command =
 			Walk Direction
 			| Look
-			| Investigate Object
+			| Investigate Item
 			| Inventory
 			| Go Direction
-			| Pickup Object
+			| Pickup Item
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
