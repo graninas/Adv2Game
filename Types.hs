@@ -20,24 +20,24 @@ data ItemName =
 			| Umbrella
 	deriving (Show, Eq, Read)
 	
-type Item = (ItemName, Int)
+type Item = (ItemName, Integer)
 
 data Object = Object {
 	oItem :: Item,
 	oDescription :: String,
 	oPickupFailMsg :: String
-}
+} deriving (Eq)
 
 type Objects = [Object]
-type Inventory = Objects
+type InventoryObjects = Objects
 
 data Command =
 			Walk Direction
 			| Look
-			| Investigate Item
+			| Investigate ItemName
 			| Inventory
 			| Go Direction
-			| Pickup Item
+			| Pickup ItemName
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
@@ -57,7 +57,7 @@ data Location = Location {
 	locShortDesc :: String,
 	locLongDesc :: String,
 	locObjects :: Objects
-} deriving (Eq, Show)
+} deriving (Eq)
 
 type Locations = [Location]
 
@@ -69,9 +69,8 @@ data GameState = GameState {
 	gsLocations :: Locations,
 	gsCurrentRoom :: Room,
 	gsRoomLongDescribed :: LongDescribedRooms, -- ≈сли длинное описание уже выводилось, то второй раз оно не будет выводитьс€. “олько по команде Look. ¬ списке gsRoomLongDescribed содержатс€ уже описанные комнаты.
-	gsInventory :: Inventory
+	gsInvObjects :: InventoryObjects
 }
-	deriving (Show)
 
 newtype GS a = GS { runGameState :: StateT GameState IO a }
     deriving (Monad, MonadIO, MonadState GameState)

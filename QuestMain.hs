@@ -24,12 +24,12 @@ parseCommand str = case reads capStrings of
 						where wordsAfterCommand = unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
-newGameState :: Locations -> Room -> LongDescribedRooms -> Inventory -> GameState
+newGameState :: Locations -> Room -> LongDescribedRooms -> InventoryObjects -> GameState
 newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
 	gsLocations = newLocations,
 	gsCurrentRoom = newRoom,
 	gsRoomLongDescribed = newLongDescribedRooms,
-	gsInventory = newInventory}
+	gsInvObjects = newInventory}
 
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
@@ -37,7 +37,7 @@ canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 tryWalk dir curGS = do
 	case canWalk curGS dir of
 		Just room -> do
-			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInventory curGS))
+			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
 			ioOutMsg $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room))
 			return ContinueGame
 				where
@@ -46,18 +46,26 @@ tryWalk dir curGS = do
 					newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
 		Nothing -> return ContinueGame
 
-tryPickup obj curGS = do
-	case tryRiseObject obj of
+		
+whatObjectExactly :: Objects -> Maybe Object
+whatObjectExactly [] = Nothing
+whatObjectExactly (x:[]) = x
+whatObjectExactly xs = do
+	ioOutMsg "What object of these variants: "
+		
+tryPickup itemNme curGS = do
+	case tryRiseObject . whatObjectExactly . objectListFromObjectsByItemName $ itemNme curLocObjects of
 		(Nothing, str) -> (ioOutMsg $ str) >> return ContinueGame
 		(Just x, str) -> do
 			(ioOutMsg $ str)
-			put (newGameState (locationsWithoutObject curLocs curRoom obj) curRoom curRoomLongDescribed (obj : curInventory))
+			put (newGameState (locationsWithoutObject curLocs curRoom itemNme) curRoom curRoomLongDescribed (itemNme : curInventory))
 			return ContinueGame
 		where
 			curLocs = gsLocations curGS
 			curRoom = gsCurrentRoom curGS
-			curInventory = gsInventory curGS
+			curInventory = gsInvObjects curGS
 			curRoomLongDescribed = gsRoomLongDescribed curGS
+			curLocObjects = locObjects curLocs
 
 run :: GS Result
 run = do
@@ -66,21 +74,26 @@ run = do
 	let parsedCmdWithContext = parseCommand strCmd
 	let currentRoom = gsCurrentRoom $ curGS
 	let roomObjects = locationObjects (gsLocations curGS) currentRoom
-	let inventory = gsInventory curGS
+	let inventory = gsInvObjects curGS
 	case parsedCmdWithContext of
 		(Nothing, str) -> (ioOutMsg $ str) >> run
 		(parsedCmd, str) -> case parsedCmd of
 			Just Quit -> ioOutMsg str >> return QuitGame
 			Just Look -> ioOutMsg (lookAround currentRoom roomObjects) >> run
 			Just Inventory -> (ioOutMsg . showInventory $ inventory) >> run
-			Just (Investigate obj) -> if canSeeObj obj then (ioOutMsg . investigateObject $ obj) >> run else (noVisObjMsg obj) >> run
+			Just (Investigate itemNme) ->
+				if canSeeObj itemNme
+				then invObj >> run
+				else (noVisObjMsg itemNme) >> run
+					where invObj = ioOutMsg  (investigateObject itemNme (roomObjects ++ inventory))
 			Just (Go dir) -> (tryWalk dir curGS) >> run
 			Just (Walk dir) -> (tryWalk dir curGS) >> run
-			Just (Pickup obj) -> if canSeeObj obj then (tryPickup obj curGS) >> run else (noVisObjMsg obj) >> run
+			Just (Pickup itemNme) -> if canSeeObj itemNme then (tryPickup itemNme curGS) >> run else (noVisObjMsg itemNme) >> run
 			Nothing -> (ioOutMsg . show $ parsedCmd) >> run
 			where
 				canSeeObj = canSeeObject (roomObjects ++ inventory)
 				noVisObjMsg = ioOutMsg . notVisibleObjectError
+				
 
 main :: IO ()
 main = do
