@@ -51,14 +51,14 @@ initWorld = GameState {
 }
 
 lookAround :: Room -> Objects -> String
-lookAround room objects = (locLongDesc . location $ room) ++ (describeObjects objects)
+lookAround room objects = (locLongDesc . location $ room) ++ (describeObjects [] objects)
 
 isRoomLongDescribed :: Rooms -> Room -> Bool
 isRoomLongDescribed = flip elem
 
 describeLocation :: Bool -> Room -> Objects -> String
-describeLocation False room objects = (locLongDesc . location $ room) ++ describeObjects objects
-describeLocation True  room objects = (locShortDesc . location $ room) ++ describeObjects objects
+describeLocation False room objects = (locLongDesc . location $ room) ++ describeObjects [] objects
+describeLocation True  room objects = (locShortDesc . location $ room) ++ describeObjects [] objects
 
 locationWithoutObject :: Location -> Object -> Location
 locationWithoutObject loc obj = Location {

@@ -64,13 +64,14 @@ showObjects pref xs = snd pref ++ showObjects' xs
 		showObjects' (x:xs) = showObject x ++ ", "
 		showObjects' [] = "]."
 
-describeObjects :: Objects -> String
-describeObjects = showObjects ([], "There are some objects here: ")
+describeObjects :: String -> Objects -> String
+describeObjects [] = showObjects ([], "There are some objects here: ")
+describeObjects str = showObjects ([], str)
 
 showInventory :: InventoryObjects -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: [")
 
 objectListFromObjectsByItemName :: ItemName -> Objects -> Objects
 objectListFromObjectsByItemName _ [] = []
-objectListFromObjectsByItemName itmNm = filter (\x -> (fst . oItem $ x) == itmNm)
+objectListFromObjectsByItemName itmNm objects = filter (\x -> (fst . oItem $ x) == itmNm) objects
 

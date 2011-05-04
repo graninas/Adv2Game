@@ -2,7 +2,7 @@ module Tools where
 
 
 import Char (toUpper, toLower)
-import System.IO (hFlush, stdout)
+import System.IO (hFlush, stdout, IO(..))
 import Control.Monad.State ({-get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), -}liftIO, MonadIO(..))
 import Types
@@ -20,5 +20,8 @@ inputStrCommand = do
 				line <- getLine
 				return (line)
  
-ioOutMsg :: String -> GS ()
-ioOutMsg = liftIO . putStrLn
+ioOutMsgGS :: String -> GS ()
+ioOutMsgGS = liftIO . putStrLn
+
+ioOutMsgIO :: String -> IO ()
+ioOutMsgIO = putStrLn
