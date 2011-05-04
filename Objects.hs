@@ -58,18 +58,17 @@ canSeeObject objects itemN = not . null $ thereObjects
 
 showObjects :: ObjectShowPrefix -> Objects -> String
 showObjects pref [] = fst pref
-showObjects pref xs = snd pref ++ showObjects' xs
+showObjects pref xs = snd pref ++ "[" ++ showObjects' xs
 	where
-		showObjects' (x:[]) = showObject x
-		showObjects' (x:xs) = showObject x ++ ", "
-		showObjects' [] = "]."
+		showObjects' (x:[]) = showObject x ++ "]."
+		showObjects' (x:xs) = showObject x ++ ", " ++ showObjects' xs
 
 describeObjects :: String -> Objects -> String
-describeObjects [] = showObjects ([], "There are some objects here: ")
+describeObjects [] = showObjects ([], "\nThere are some objects here: ")
 describeObjects str = showObjects ([], str)
 
 showInventory :: InventoryObjects -> String
-showInventory = showObjects ("No objects in your inventory.", "You have: [")
+showInventory = showObjects ("No objects in your inventory.", "You have: ")
 
 objectListFromObjectsByItemName :: ItemName -> Objects -> Objects
 objectListFromObjectsByItemName _ [] = []
