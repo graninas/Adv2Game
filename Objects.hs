@@ -7,11 +7,20 @@ import Items
 
 --- Data functions ---
 
+objectName' :: Item -> String
+objectName' itm
+	| itm == homeUmbrella1 = "Red Umbrella"
+	| itm == homeUmbrella2 = "Blue Umbrella"
+	| itm == homePhone = "Digital Phone"
+	| itm == homePhone2 = "Broken Phone"
+	| otherwise = show . fst $ itm
+
 objectDescription' :: Item -> String
 objectDescription' itm
 	| itm == homeUmbrella1 = "Nice red mechanic Umbrella."
 	| itm == homeUmbrella2 = "Nice blue Umbrella."
 	| itm == homePhone = "The Phone has some voice messages for you."
+	| itm == homePhone2 = "Broken electric phone."
 	| otherwise = printf "There is nothing special about %s." (show . fst $ itm)
 
 objectPickupFailMessage' :: Item -> String
@@ -22,18 +31,16 @@ objectPickupFailMessage' itm
 isPickupable :: Object -> Bool
 isPickupable = flip elem [homeUmbrella1] . oItem
 
-type ObjectShowPrefix = (String, String)
-
 ----------------------
 
 object :: Item -> Object
-object itm = Object {oItem = itm, oDescription = objectDescription' itm, oPickupFailMsg = objectPickupFailMessage' itm}
+object itm = Object {oItem = itm, oName = objectName' itm, oDescription = objectDescription' itm, oPickupFailMsg = objectPickupFailMessage' itm}
 
 itemName :: Object -> ItemName
 itemName = fst . oItem
 
 showObject :: Object -> String
-showObject = show . itemName
+showObject = oName
 
 thereAreObjects :: Objects -> ItemName -> Objects
 thereAreObjects objects itemN = filter (\x -> (fst . oItem $ x) == itemN) objects
@@ -56,19 +63,46 @@ canSeeObject :: Objects -> ItemName -> Bool
 canSeeObject objects itemN = not . null $ thereObjects
 	where thereObjects = thereAreObjects objects itemN
 
-showObjects :: ObjectShowPrefix -> Objects -> String
-showObjects pref [] = fst pref
-showObjects pref xs = snd pref ++ "[" ++ showObjects' xs
+showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
+showObjects pref _          _         [] = fst pref
+showObjects pref lFuncDescr boundStrs xs = snd pref ++ (showLeftBracket boundStrs) ++ showObjects' xs lFuncDescr
 	where
-		showObjects' (x:[]) = showObject x ++ "]."
-		showObjects' (x:xs) = showObject x ++ ", " ++ showObjects' xs
+		showObjects' (x:[]) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showRightBracket boundStrs)
+		showObjects' (x:xs) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showDelimiter boundStrs) ++ showObjects' xs (modifyObjectShowingFunc lFuncDescr)
 
-describeObjects :: String -> Objects -> String
-describeObjects [] = showObjects ([], "\nThere are some objects here: ")
-describeObjects str = showObjects ([], str)
+type ObjectShowPrefix = (String, String)
+type IntroString = String
+type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
+type ShowObjectsBoundStrings = [String]
+
+showLeftBracket :: ShowObjectsBoundStrings -> String
+showRightBracket :: ShowObjectsBoundStrings -> String
+showDelimiter :: ShowObjectsBoundStrings -> String
+showLeftBracket = head
+showRightBracket = head . tail
+showDelimiter = last
+
+standartObjectShowingF :: ShowObjectsFunc
+standartObjectShowingF = ((\x _ -> showObject x), \_ -> 0, 0)
+
+standartBoundStrs :: ShowObjectsBoundStrings
+standartBoundStrs = ["[", "].", ", "]
+
+modifyObjectShowingFunc :: ShowObjectsFunc -> ShowObjectsFunc
+modifyObjectShowingFunc (showingLambda, enumChangeF, enumVal) = (showingLambda, enumChangeF, enumChangeF enumVal)
+
+applyObjectShowingF :: ShowObjectsFunc -> Object -> String
+applyObjectShowingF (showingLambda, _, enumVal) obj = showingLambda obj enumVal
+
+describeObjects :: IntroString -> Objects -> String
+describeObjects [] = showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs
+describeObjects str = showObjects ([], str) standartObjectShowingF standartBoundStrs
 
 showInventory :: InventoryObjects -> String
-showInventory = showObjects ("No objects in your inventory.", "You have: ")
+showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
+
+enumObjects :: IntroString -> Objects -> String
+enumObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 1) ["","",""]
 
 objectListFromObjectsByItemName :: ItemName -> Objects -> Objects
 objectListFromObjectsByItemName _ [] = []

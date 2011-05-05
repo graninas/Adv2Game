@@ -51,8 +51,8 @@ whatObjectExactly :: Objects -> Maybe Object
 whatObjectExactly [] = Nothing
 whatObjectExactly (x:[]) = Just x
 whatObjectExactly xs = do
-	x <- return (ioOutMsgGS ( describeObjects "What object of these variants: " xs ))
-	undefined
+	return (ioOutMsgGS ( enumObjects "What object of these variants: " xs ))
+	Nothing
 		
 tryPickup itemNme curGS = do
 	case whatObjectExactly (objectListFromObjectsByItemName itemNme curLocObjects) of

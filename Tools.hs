@@ -24,4 +24,4 @@ ioOutMsgGS :: String -> GS ()
 ioOutMsgGS = liftIO . putStrLn
 
 ioOutMsgIO :: String -> IO ()
-ioOutMsgIO str = putStrLn str
+ioOutMsgIO = putStrLn

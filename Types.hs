@@ -16,7 +16,7 @@ data Direction = North | South | West | East | NoDirection
 data ItemName =
 			Phone
 			| Table
-			| Drawer	-- Выдвижной ящик стола
+			| Drawer
 			| Umbrella
 	deriving (Show, Eq, Read)
 	
@@ -24,6 +24,7 @@ type Item = (ItemName, Integer)
 
 data Object = Object {
 	oItem :: Item,
+	oName :: String,
 	oDescription :: String,
 	oPickupFailMsg :: String
 } deriving (Eq)
