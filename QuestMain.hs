@@ -10,7 +10,6 @@ import Control.Monad.State (get, gets, StateT(..), evalStateT,
 import Char(isDigit, digitToInt)
 
 
-parseCommand :: String -> (Maybe Command, String)
 parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
 					[(x,"")] -> (Just x, [])
@@ -31,7 +30,7 @@ parseObject str objects = case read str of
 							True -> Just ( objects!!((digitToInt x)-1) )
 							False -> Nothing
 	
-	
+{-
 newGameState :: Locations -> Room -> LongDescribedRooms -> InventoryObjects -> GameState
 newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
 	gsLocations = newLocations,
@@ -42,7 +41,7 @@ newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
-tryWalk :: Direction -> GameState -> GS GameActionCommand
+tryWalk :: Direction -> GameState -> GS GameResult
 tryWalk dir curGS = case canWalk curGS dir of
 		Just room -> do
 			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
@@ -54,9 +53,9 @@ tryWalk dir curGS = case canWalk curGS dir of
 					newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
 		Nothing -> return ContinueGame
 
-{-
-run :: GS Result
-run = do
+
+run' :: GS GameActionCommand
+run' = do
 	curGS <- get
 	strCmd <- liftIO inputStrCommand
 	let parsedCmdWithContext = parseCommand strCmd
@@ -76,27 +75,31 @@ run = do
 					where invObj = ioOutMsgGS  (investigateObject itemNme (roomObjects ++ inventory))
 			Just (Go dir) -> (tryWalk dir curGS) >> run
 			Just (Walk dir) -> (tryWalk dir curGS) >> run
-			Just (Pickup itemNme) -> if canSeeObj itemNme then (tryPickup' itemNme roomObjects curGS) >> run else (noVisObjMsg itemNme) >> run
+		--	Just (Pickup itemNme) -> if canSeeObj itemNme then (tryPickup' itemNme roomObjects curGS) >> run else (noVisObjMsg itemNme) >> run
 			Nothing -> (ioOutMsgGS . show $ parsedCmd) >> run
 			where
 				canSeeObj = canSeeObject (roomObjects ++ inventory)
 				noVisObjMsg = ioOutMsgGS . notVisibleObjectError
 				-}
 
-run = undefined
-				
-				
-gameCycle gameAction = case gameAction of
-		(QuitGame, _) -> return ()
-		(ContinueGame, _) -> run
-		(ReadUserInput, inputParser) -> inputStrCommand >>= inputParser >>= run
-			
-		
-				
+run' :: String -> GS GameActionResult
+run' msg = do
+		case parseCommand msg of
+			(Just Quit, _) -> return (QuitGame, "Be seen you...")
+			(Nothing, str) -> return (PrintMessage, str)
+
+run :: String -> GS ()
+run msg = do
+	(gameAction, str) <- run' msg
+	case gameAction of
+		QuitGame -> ioOutMsgGS str >> return ()
+		PrintMessage -> ioOutMsgGS str >> run ""
+		ReadUserInput -> ioInMsgGS >>= run
+
 main :: IO ()
 main = do
 	putStrLn $ lookAround startRoom startRoomObjects
-	x <- evalStateT (runGameState run) initWorld
+	x <- evalStateT (runGameState (run "Quit")) initWorld
 	putStrLn ""
 		where
 			startRoom = gsCurrentRoom $ initWorld

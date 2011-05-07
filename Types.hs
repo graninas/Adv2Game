@@ -31,18 +31,6 @@ data Object = Object {
 
 type Objects = [Object]
 type InventoryObjects = Objects
-
-data Command =
-			Walk Direction
-			| Look
-			| Investigate ItemName
-			| Inventory
-			| Go Direction
-			| Pickup ItemName
-			| Quit
-			| Help
-	deriving (Eq, Show, Read)
-	
 type Directions = [Direction]
 
 data Path = Path {
@@ -62,12 +50,20 @@ data Location = Location {
 
 type Locations = [Location]
 
-type InputParser = String -> (Command, Maybe Object)
+data Command =
+			Walk Direction
+			| Look
+			| Investigate ItemName
+			| Inventory
+			| Go Direction
+			| Pickup ItemName
+			| Quit
+			| Help
+	deriving (Eq, Show, Read)
 
-data GameActionCommand = Won | Lost | ContinueGame | QuitGame | ReadUserInput
-    deriving (Eq)
+data GameAction = PrintMessage | QuitGame | ReadUserInput
 
-type GameAction = (GameActionCommand, InputParser)
+type GameActionResult = (GameAction, String)
 
 data GameState = GameState {
 	gsLocations :: Locations,
@@ -76,5 +72,6 @@ data GameState = GameState {
 	gsInvObjects :: InventoryObjects
 }
 
-newtype GS a = GS { runGameState :: StateT GameState IO a }
-    deriving (Monad, MonadIO, MonadState GameState)
+newtype GS a = GS {
+	runGameState :: StateT GameState IO a
+} deriving (Monad, MonadIO, MonadState GameState)
