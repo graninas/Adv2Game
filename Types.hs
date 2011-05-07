@@ -62,9 +62,12 @@ data Location = Location {
 
 type Locations = [Location]
 
--- Новый вариант состояния игры. Создан по примеру Advgame.
-data Result = Won | Lost | ContinueGame | QuitGame
+type InputParser = String -> (Command, Maybe Object)
+
+data GameActionCommand = Won | Lost | ContinueGame | QuitGame | ReadUserInput
     deriving (Eq)
+
+type GameAction = (GameActionCommand, InputParser)
 
 data GameState = GameState {
 	gsLocations :: Locations,

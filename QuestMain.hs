@@ -42,7 +42,7 @@ newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
-tryWalk :: Direction -> GameState -> GS Result
+tryWalk :: Direction -> GameState -> GS GameActionCommand
 tryWalk dir curGS = case canWalk curGS dir of
 		Just room -> do
 			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
@@ -54,60 +54,7 @@ tryWalk dir curGS = case canWalk curGS dir of
 					newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
 		Nothing -> return ContinueGame
 
-
 {-
-	
-saveInventoryObject :: Object -> GameState -> GS Result
-saveInventoryObject obj curGS = put (newGameState (locationsWithoutObject curLocations curRoom obj) curRoom curRoomLongDescribed (obj : curInventory))
-								>> return ContinueGame
-	where
-		curLocations = gsLocations curGS
-		curRoom = gsCurrentRoom curGS
-		curInventory = gsInvObjects curGS
-		curRoomLongDescribed = gsRoomLongDescribed curGS
-		curLocObjects = locObjects' curRoom curLocations
-		locObjects' room locs = locObjects . head $ (filter (\y -> room == locRoom y) locs)
-
-exactlyObject :: Objects -> Maybe Object
-exactlyObject [] = Nothing
-exactlyObject (x:[]) = Just x
-exactlyObject xs = undefined
-
-tryPickup' :: ItemName -> Objects -> GameState -> GS Result
-tryPickup' itemNme locObjects curGS = saveState . maybeObject $ mathedObjects itemNme locObjects
-	where
-		maybeObject [] = Nothing
-		maybeObject (o:[]) = Just o
-		maybeObject (os) = do
-			_ <- return (ioOutMsgGS (enumerateObjects "What object of these variants: " os))
-			parsedObj <- return (inputStrCommand \s -> (parseObject s locObjects))
-			Nothing
-		saveState mbObj = case mbObj of
-			Nothing -> return ContinueGame
-			Just obj -> saveInventoryObject obj curGS
-
--}
-{-tryPickup itemNme curGS = do
-	case exactlySelectedObject of
-		Nothing -> ioOutMsgGS "Ok." >> return ContinueGame
-		Just obj ->	case tryRiseObject obj of
-			(Nothing, str) -> (ioOutMsgGS $ str) >> return ContinueGame
-			(Just x, str) -> do
-				(ioOutMsgGS $ str)
-				put (newGameState (locationsWithoutObject curLocStates curRoom obj) curRoom curRoomLongDescribed (obj : curInventory))
-				return ContinueGame
-	where
-		curLocStates = gsLocations curGS
-		curRoom = gsCurrentRoom curGS
-		curInventory = gsInvObjects curGS
-		curRoomLongDescribed = gsRoomLongDescribed curGS
-		curLocObjects = locObjects' curRoom curLocStates
-		locObjects' room locs = locObjects . head $ (filter (\y -> room == locRoom y) locs)
-		objList = objectListFromObjectsByItemName itemNme curLocObjects
-		exactlySelectedObject = if length objList == 1 then head objList else whatObjectExactly (liftIO inputStrCommand) objList
-						--_ <- ioOutMsgIO (enumObjects "What object of these variants: " objList)
--}				
-
 run :: GS Result
 run = do
 	curGS <- get
@@ -134,8 +81,18 @@ run = do
 			where
 				canSeeObj = canSeeObject (roomObjects ++ inventory)
 				noVisObjMsg = ioOutMsgGS . notVisibleObjectError
-				
+				-}
 
+run = undefined
+				
+				
+gameCycle gameAction = case gameAction of
+		(QuitGame, _) -> return ()
+		(ContinueGame, _) -> run
+		(ReadUserInput, inputParser) -> inputStrCommand >>= inputParser >>= run
+			
+		
+				
 main :: IO ()
 main = do
 	putStrLn $ lookAround startRoom startRoomObjects
