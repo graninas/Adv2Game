@@ -86,6 +86,7 @@ run' :: String -> GS GameActionResult
 run' msg = do
 		case parseCommand msg of
 			(Just Quit, _) -> return (QuitGame, "Be seen you...")
+			(Nothing, []) -> return (ReadUserInput, [])
 			(Nothing, str) -> return (PrintMessage, str)
 
 run :: String -> GS ()
@@ -99,7 +100,7 @@ run msg = do
 main :: IO ()
 main = do
 	putStrLn $ lookAround startRoom startRoomObjects
-	x <- evalStateT (runGameState (run "Quit")) initWorld
+	x <- evalStateT (runGameState (run [])) initWorld
 	putStrLn ""
 		where
 			startRoom = gsCurrentRoom $ initWorld
