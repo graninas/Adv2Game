@@ -86,11 +86,15 @@ run' msg = do
 		curGS <- get
 		let currentRoom = gsCurrentRoom curGS
 		let roomObjects = locationObjects (gsLocations curGS) currentRoom
+		let inventory = gsInvObjects curGS
 		case parseCommand msg of
 			(Just Quit, _) -> return (QuitGame, "Be seen you...")
 			(Nothing, []) -> return (ReadUserInput, [])
 			(Nothing, str) -> return (PrintMessage, str)
 			(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects)
+			(Just (Investigate itmName), _) -> case canSeeObject (roomObjects ++ inventory) itmName of
+					True -> return (PrintMessage, investigateObject itmName (roomObjects ++ inventory))
+					False -> return (PrintMessage, notVisibleObjectError itmName)
 
 
 run :: String -> GS ()
