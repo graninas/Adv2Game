@@ -55,15 +55,13 @@ data Command =
 			| Look
 			| Investigate ItemName
 			| Inventory
-			| Go Direction
 			| Pickup ItemName
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
 
-data GameAction = PrintMessage | QuitGame | ReadUserInput
-
-type GameActionResult = (GameAction, String)
+data GameAction = PrintMessage | QuitGame | ReadUserInput | SaveState
+type GameActionResult = (GameAction, String, Maybe GameState)
 
 data GameState = GameState {
 	gsLocations :: Locations,

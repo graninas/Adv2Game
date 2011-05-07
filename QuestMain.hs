@@ -8,6 +8,7 @@ import Tools
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
 import Char(isDigit, digitToInt)
+import Text.Printf(printf)
 
 parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
@@ -30,15 +31,7 @@ parseObject str objects = case read str of
 							False -> Nothing
 	
 {-
-newGameState :: Locations -> Room -> LongDescribedRooms -> InventoryObjects -> GameState
-newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
-	gsLocations = newLocations,
-	gsCurrentRoom = newRoom,
-	gsRoomLongDescribed = newLongDescribedRooms,
-	gsInvObjects = newInventory}
 
-canWalk :: GameState -> Direction -> Maybe Room
-canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
 tryWalk :: Direction -> GameState -> GS GameResult
 tryWalk dir curGS = case canWalk curGS dir of
@@ -81,6 +74,34 @@ run' = do
 				noVisObjMsg = ioOutMsgGS . notVisibleObjectError
 				-}
 
+newGameState :: Locations -> Room -> LongDescribedRooms -> InventoryObjects -> GameState
+newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
+	gsLocations = newLocations,
+	gsCurrentRoom = newRoom,
+	gsRoomLongDescribed = newLongDescribedRooms,
+	gsInvObjects = newInventory
+	}
+	
+successWalkingMsg :: Room -> Direction -> GameState -> String
+successWalkingMsg _ dir _ = printf "You walking to %s."  (show dir)
+
+walkTo :: Room -> GameState -> (String, GameState)
+walkTo room curGS = (locDescription, newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
+		where
+			newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
+			roomAlreadyLongDescribed = isRoomLongDescribed roomsDescribedEarlier room
+			roomsDescribedEarlier = gsRoomLongDescribed curGS
+			locDescription = describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room)
+
+canWalk :: GameState -> Direction -> Maybe Room
+canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
+
+tryWalk :: Direction -> GameState -> GS (String, Maybe GameState)
+tryWalk dir curGS = case canWalk curGS dir of
+						Just room -> return (successWalkingMsg room dir curGS ++ "\n" ++ newLocDescr, Just newGS)
+							where (newLocDescr, newGS) = walkTo room curGS
+						Nothing -> return (failureWalkingMsg dir, Nothing)
+				
 run' :: String -> GS GameActionResult
 run' msg = do
 		curGS <- get
@@ -88,22 +109,29 @@ run' msg = do
 		let roomObjects = locationObjects (gsLocations curGS) currentRoom
 		let inventory = gsInvObjects curGS
 		case parseCommand msg of
-			(Just Quit, _) -> return (QuitGame, "Be seen you...")
-			(Nothing, []) -> return (ReadUserInput, [])
-			(Nothing, str) -> return (PrintMessage, str)
-			(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects)
+			(Nothing, []) -> return (ReadUserInput, [], Nothing)
+			(Nothing, str) -> return (PrintMessage, str, Nothing)
+			(Just Quit, _) -> return (QuitGame, "Be seen you...", Nothing)
+			(Just (Walk dir), _) -> do
+								(walkMsg, newState) <- tryWalk dir curGS
+								return (SaveState, walkMsg, newState)
+			(Just Inventory, _) -> return (PrintMessage, showInventory inventory, Nothing)
+			(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects, Nothing)
 			(Just (Investigate itmName), _) -> case canSeeObject (roomObjects ++ inventory) itmName of
-					True -> return (PrintMessage, investigateObject itmName (roomObjects ++ inventory))
-					False -> return (PrintMessage, notVisibleObjectError itmName)
+					True -> return (PrintMessage, investigateObject itmName (roomObjects ++ inventory), Nothing)
+					False -> return (PrintMessage, notVisibleObjectError itmName, Nothing)
 
 
 run :: String -> GS ()
 run msg = do
-	(gameAction, str) <- run' msg
+	(gameAction, str, maybeGameState) <- run' msg
 	case gameAction of
 		QuitGame -> ioOutMsgGS str >> return ()
 		PrintMessage -> ioOutMsgGS str >> run ""
 		ReadUserInput -> ioInMsgGS >>= run
+		SaveState -> case maybeGameState of
+				Just newState -> ioOutMsgGS str >> put newState >> run ""
+				Nothing -> ioOutMsgGS str >> run ""
 
 main :: IO ()
 main = do
