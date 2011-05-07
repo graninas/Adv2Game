@@ -1,14 +1,14 @@
 module Main where
 
 import Types
-import Locations
-import Directions
 import Objects
 import Tools
+import GameState
+import Locations
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
 import Char(isDigit, digitToInt)
-import GameState
+
 
 parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
