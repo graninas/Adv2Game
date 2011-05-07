@@ -9,7 +9,6 @@ import Control.Monad.State (get, gets, StateT(..), evalStateT,
                             put, MonadState(..), liftIO)
 import Char(isDigit, digitToInt)
 
-
 parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
 					[(x,"")] -> (Just x, [])
@@ -66,7 +65,7 @@ run' = do
 		(Nothing, str) -> (ioOutMsgGS $ str) >> run
 		(parsedCmd, str) -> case parsedCmd of
 			Just Quit -> ioOutMsgGS str >> return QuitGame
-			Just Look -> ioOutMsgGS (lookAround currentRoom roomObjects) >> run
+			Just Look -> ioOutMsgGS () >> run
 			Just Inventory -> (ioOutMsgGS . showInventory $ inventory) >> run
 			Just (Investigate itemNme) ->
 				if canSeeObj itemNme
@@ -84,10 +83,15 @@ run' = do
 
 run' :: String -> GS GameActionResult
 run' msg = do
+		curGS <- get
+		let currentRoom = gsCurrentRoom curGS
+		let roomObjects = locationObjects (gsLocations curGS) currentRoom
 		case parseCommand msg of
 			(Just Quit, _) -> return (QuitGame, "Be seen you...")
 			(Nothing, []) -> return (ReadUserInput, [])
 			(Nothing, str) -> return (PrintMessage, str)
+			(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects)
+
 
 run :: String -> GS ()
 run msg = do
