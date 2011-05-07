@@ -101,10 +101,10 @@ describeObjects str = showObjects ([], str) standartObjectShowingF standartBound
 showInventory :: InventoryObjects -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
 
-enumObjects :: IntroString -> Objects -> String
-enumObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 1) ["","",""]
+enumerateObjects :: IntroString -> Objects -> String
+enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 1) ["","",""]
 
-objectListFromObjectsByItemName :: ItemName -> Objects -> Objects
-objectListFromObjectsByItemName _ [] = []
-objectListFromObjectsByItemName itmNm objects = filter (\x -> (fst . oItem $ x) == itmNm) objects
+mathedObjects :: ItemName -> Objects -> Objects
+mathedObjects _ [] = []
+mathedObjects itmNm objects = filter (\x -> (fst . oItem $ x) == itmNm) objects
 

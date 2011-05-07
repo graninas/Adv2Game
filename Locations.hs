@@ -77,5 +77,3 @@ locationsWithoutObject locs room obj = [res | let cl = (changedLocation locs), l
 		changedLocation allLocs = case null (filteredLocations allLocs) of
 			True -> []
 			False -> [locationWithoutObject (head . filteredLocations $ allLocs) obj]
-
---locationsWithoutObject (l:locs) room obj = if locRoom l == room then locationWithoutObject l obj : locs else l : locationsWithoutObject locs room obj

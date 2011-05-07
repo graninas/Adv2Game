@@ -14,6 +14,7 @@ capitalize :: String -> String
 capitalize = unwords . map capitalize' . words
 	where capitalize' (x:xs) = (toUpper x) : map toLower xs
 
+inputStrCommand :: IO String
 inputStrCommand = do
 				putStr "> "	-- Код взят из Advgame.
 				hFlush stdout

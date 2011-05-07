@@ -7,7 +7,7 @@ import Objects
 import Tools
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
-
+import Char(isDigit, digitToInt)
 
 
 parseCommand :: String -> (Maybe Command, String)
@@ -24,6 +24,14 @@ parseCommand str = case reads capStrings of
 						where wordsAfterCommand = unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
+parseObject :: String -> Objects -> Maybe Object
+parseObject _ [] = Nothing
+parseObject str objects = case read str of
+						[(x, "")] -> case isDigit x of
+							True -> Just ( objects!!((digitToInt x)-1) )
+							False -> Nothing
+	
+	
 newGameState :: Locations -> Room -> LongDescribedRooms -> InventoryObjects -> GameState
 newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
 	gsLocations = newLocations,
@@ -34,8 +42,8 @@ newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
-tryWalk dir curGS = do
-	case canWalk curGS dir of
+tryWalk :: Direction -> GameState -> GS Result
+tryWalk dir curGS = case canWalk curGS dir of
 		Just room -> do
 			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
 			ioOutMsgGS $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room))
@@ -46,16 +54,41 @@ tryWalk dir curGS = do
 					newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
 		Nothing -> return ContinueGame
 
-		
-whatObjectExactly :: Objects -> Maybe Object
-whatObjectExactly [] = Nothing
-whatObjectExactly (x:[]) = Just x
-whatObjectExactly xs = do
-	return (ioOutMsgGS ( enumObjects "What object of these variants: " xs ))
-	Nothing
-		
-tryPickup itemNme curGS = do
-	case whatObjectExactly (objectListFromObjectsByItemName itemNme curLocObjects) of
+
+{-
+	
+saveInventoryObject :: Object -> GameState -> GS Result
+saveInventoryObject obj curGS = put (newGameState (locationsWithoutObject curLocations curRoom obj) curRoom curRoomLongDescribed (obj : curInventory))
+								>> return ContinueGame
+	where
+		curLocations = gsLocations curGS
+		curRoom = gsCurrentRoom curGS
+		curInventory = gsInvObjects curGS
+		curRoomLongDescribed = gsRoomLongDescribed curGS
+		curLocObjects = locObjects' curRoom curLocations
+		locObjects' room locs = locObjects . head $ (filter (\y -> room == locRoom y) locs)
+
+exactlyObject :: Objects -> Maybe Object
+exactlyObject [] = Nothing
+exactlyObject (x:[]) = Just x
+exactlyObject xs = undefined
+
+tryPickup' :: ItemName -> Objects -> GameState -> GS Result
+tryPickup' itemNme locObjects curGS = saveState . maybeObject $ mathedObjects itemNme locObjects
+	where
+		maybeObject [] = Nothing
+		maybeObject (o:[]) = Just o
+		maybeObject (os) = do
+			_ <- return (ioOutMsgGS (enumerateObjects "What object of these variants: " os))
+			parsedObj <- return (inputStrCommand \s -> (parseObject s locObjects))
+			Nothing
+		saveState mbObj = case mbObj of
+			Nothing -> return ContinueGame
+			Just obj -> saveInventoryObject obj curGS
+
+-}
+{-tryPickup itemNme curGS = do
+	case exactlySelectedObject of
 		Nothing -> ioOutMsgGS "Ok." >> return ContinueGame
 		Just obj ->	case tryRiseObject obj of
 			(Nothing, str) -> (ioOutMsgGS $ str) >> return ContinueGame
@@ -70,6 +103,10 @@ tryPickup itemNme curGS = do
 		curRoomLongDescribed = gsRoomLongDescribed curGS
 		curLocObjects = locObjects' curRoom curLocStates
 		locObjects' room locs = locObjects . head $ (filter (\y -> room == locRoom y) locs)
+		objList = objectListFromObjectsByItemName itemNme curLocObjects
+		exactlySelectedObject = if length objList == 1 then head objList else whatObjectExactly (liftIO inputStrCommand) objList
+						--_ <- ioOutMsgIO (enumObjects "What object of these variants: " objList)
+-}				
 
 run :: GS Result
 run = do
@@ -92,7 +129,7 @@ run = do
 					where invObj = ioOutMsgGS  (investigateObject itemNme (roomObjects ++ inventory))
 			Just (Go dir) -> (tryWalk dir curGS) >> run
 			Just (Walk dir) -> (tryWalk dir curGS) >> run
-			Just (Pickup itemNme) -> if canSeeObj itemNme then (tryPickup itemNme curGS) >> run else (noVisObjMsg itemNme) >> run
+			Just (Pickup itemNme) -> if canSeeObj itemNme then (tryPickup' itemNme roomObjects curGS) >> run else (noVisObjMsg itemNme) >> run
 			Nothing -> (ioOutMsgGS . show $ parsedCmd) >> run
 			where
 				canSeeObj = canSeeObject (roomObjects ++ inventory)
