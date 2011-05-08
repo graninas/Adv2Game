@@ -29,76 +29,39 @@ parseObject str objects = case read str of
 						[(x, "")] -> case isDigit x of
 							True -> Just ( objects!!((digitToInt x)-1) )
 							False -> Nothing
-	
-{-
 
-
-tryWalk :: Direction -> GameState -> GS GameResult
-tryWalk dir curGS = case canWalk curGS dir of
-		Just room -> do
-			put (newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
-			ioOutMsgGS $ (describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room))
-			return ContinueGame
-				where
-					roomsDescribedEarlier = gsRoomLongDescribed curGS
-					roomAlreadyLongDescribed = isRoomLongDescribed roomsDescribedEarlier room
-					newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
-		Nothing -> return ContinueGame
-
-
-run' :: GS GameActionCommand
-run' = do
-	curGS <- get
-	strCmd <- liftIO inputStrCommand
-	let parsedCmdWithContext = parseCommand strCmd
-	let currentRoom = gsCurrentRoom $ curGS
-	let roomObjects = locationObjects (gsLocations curGS) currentRoom
-	let inventory = gsInvObjects curGS
-	case parsedCmdWithContext of
-		(Nothing, str) -> (ioOutMsgGS $ str) >> run
-		(parsedCmd, str) -> case parsedCmd of
-			Just Quit -> ioOutMsgGS str >> return QuitGame
-			Just Look -> ioOutMsgGS () >> run
-			Just Inventory -> (ioOutMsgGS . showInventory $ inventory) >> run
-			Just (Investigate itemNme) ->
-				if canSeeObj itemNme
-				then invObj >> run
-				else (noVisObjMsg itemNme) >> run
-					where invObj = ioOutMsgGS  (investigateObject itemNme (roomObjects ++ inventory))
-			Just (Go dir) -> (tryWalk dir curGS) >> run
-			Just (Walk dir) -> (tryWalk dir curGS) >> run
-		--	Just (Pickup itemNme) -> if canSeeObj itemNme then (tryPickup' itemNme roomObjects curGS) >> run else (noVisObjMsg itemNme) >> run
-			Nothing -> (ioOutMsgGS . show $ parsedCmd) >> run
-			where
-				canSeeObj = canSeeObject (roomObjects ++ inventory)
-				noVisObjMsg = ioOutMsgGS . notVisibleObjectError
-				-}
-
-
-				
-run' :: String -> GS GameActionResult
-run' msg = do
+run' :: String -> Bool -> GS GameActionResult
+run' msg qualifiedInput = do
 		curGS <- get
 		let currentRoom = gsCurrentRoom curGS
 		let roomObjects = locationObjects (gsLocations curGS) currentRoom
 		let inventory = gsInvObjects curGS
-		case parseCommand msg of
-			(Nothing, []) -> return (ReadUserInput, [], Nothing)
-			(Nothing, str) -> return (PrintMessage, str, Nothing)
-			(Just Quit, _) -> return (QuitGame, "Be seen you...", Nothing)
-			(Just (Walk dir), _) -> do
-								(walkMsg, newState) <- tryWalk dir curGS
-								return (SaveState, walkMsg, newState)
-			(Just Inventory, _) -> return (PrintMessage, showInventory inventory, Nothing)
-			(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects, Nothing)
-			(Just (Investigate itmName), _) -> case canSeeObject (roomObjects ++ inventory) itmName of
-					True -> return (PrintMessage, investigateObject itmName (roomObjects ++ inventory), Nothing)
-					False -> return (PrintMessage, notVisibleObjectError itmName, Nothing)
+		let pickupRoutine itmName = do
+				(pickupingMsg, maybeNewState, needSelectObject) <- tryPickup itmName curGS
+				case needSelectObject of
+					False -> return (SaveState, pickupingMsg, maybeNewState)
+					True ->  return (ReadUserInputForPickup, pickupingMsg, Nothing)
+		case qualifiedInput of
+			False -> case parseCommand msg of
+					(Nothing, []) -> return (ReadUserInput, [], Nothing)
+					(Nothing, str) -> return (PrintMessage, str, Nothing)
+					(Just Quit, _) -> return (QuitGame, "Be seen you...", Nothing)
+					(Just (Walk dir), _) -> do
+										(walkMsg, newState) <- tryWalk dir curGS
+										return (SaveState, walkMsg, newState)
+					(Just Inventory, _) -> return (PrintMessage, showInventory inventory, Nothing)
+					(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects, Nothing)
+					(Just (Investigate itmName), _) -> case canSeeObject (roomObjects ++ inventory) itmName of
+							True -> return (PrintMessage, investigateObject itmName (roomObjects ++ inventory), Nothing)
+							False -> return (PrintMessage, notVisibleObjectError itmName, Nothing)
+					(Just (Pickup itmName), _) -> pickupRoutine itmName
+			--True ->
+		
 
 
 run :: String -> GS ()
 run msg = do
-	(gameAction, str, maybeGameState) <- run' msg
+	(gameAction, str, maybeGameState) <- run' msg False
 	case gameAction of
 		QuitGame -> ioOutMsgGS str >> return ()
 		PrintMessage -> ioOutMsgGS str >> run ""
@@ -106,6 +69,7 @@ run msg = do
 		SaveState -> case maybeGameState of
 				Just newState -> ioOutMsgGS str >> put newState >> run ""
 				Nothing -> ioOutMsgGS str >> run ""
+		ReadUserInputForPickup -> ioInMsgGS >>= run
 
 main :: IO ()
 main = do

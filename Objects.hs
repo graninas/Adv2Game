@@ -1,8 +1,9 @@
 module Objects where
 
 import Types
-import Text.Printf(printf)
 import Items
+
+import Text.Printf(printf)
 
 
 --- Data functions ---
@@ -48,9 +49,6 @@ thereAreObjects objects itemN = filter (\x -> (fst . oItem $ x) == itemN) object
 notVisibleObjectError :: ItemName -> String
 notVisibleObjectError itmNm = printf "You don't see any %s here." (show itmNm)
 
-tryRiseObject :: Object -> (Maybe Object, String)
-tryRiseObject obj = if isPickupable obj then (Just obj, showObject obj ++ " added to your inventory.") else (Nothing, oPickupFailMsg obj)
-
 investigateObject :: ItemName -> Objects -> String
 investigateObject itemN objects = if not . null $ thereObjects then oDescription . head $ thereObjects else notVisibleObjectError itemN
 	where thereObjects = thereAreObjects objects itemN
@@ -58,6 +56,12 @@ investigateObject itemN objects = if not . null $ thereObjects then oDescription
 locationObjects :: Locations -> Room -> Objects
 locationObjects [] _ = []
 locationObjects (x:xs) room = if room == locRoom x then locObjects x else locationObjects xs room
+
+successPickupingObjectMsg :: Object -> String
+successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
+
+failurePickupingObjectMsg :: Object -> String
+failurePickupingObjectMsg = oPickupFailMsg
 
 canSeeObject :: Objects -> ItemName -> Bool
 canSeeObject objects itemN = not . null $ thereObjects

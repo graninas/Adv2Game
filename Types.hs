@@ -60,8 +60,10 @@ data Command =
 			| Help
 	deriving (Eq, Show, Read)
 
-data GameAction = PrintMessage | QuitGame | ReadUserInput | SaveState
+data GameAction = PrintMessage | QuitGame | ReadUserInput | SaveState | ReadUserInputForPickup
 type GameActionResult = (GameAction, String, Maybe GameState)
+
+type PickupResult = (String, Maybe GameState, Bool) -- Message, Maybe new GameState, isNeedToSelectOneObject
 
 data GameState = GameState {
 	gsLocations :: Locations,

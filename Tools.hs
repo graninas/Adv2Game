@@ -26,6 +26,3 @@ ioOutMsgGS = liftIO . putStrLn
 
 ioInMsgGS :: GS String
 ioInMsgGS = liftIO inputStrCommand
-
-ioOutMsgIO :: String -> IO ()
-ioOutMsgIO = putStrLn
