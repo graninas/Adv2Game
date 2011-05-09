@@ -2,7 +2,7 @@ module Objects where
 
 import Types
 import Items
-
+import Tools
 import Text.Printf(printf)
 
 
@@ -33,6 +33,31 @@ isPickupable :: Object -> Bool
 isPickupable = flip elem [homeUmbrella1] . oItem
 
 ----------------------
+
+readsObject :: String -> Objects -> Objects
+readsObject [] _ = []
+readsObject _ [] = []
+readsObject s objects = filter (\x -> (capitalizedOName x) == capitalizedS) objects
+	where
+		capitalizedS = capitalize s
+		capitalizedOName = capitalize . oName
+
+parseObject :: String -> Objects -> (Maybe Object, String)
+parseObject _ [] = (Nothing, "No objects to match.")
+parseObject str objects = case readsObject str objects of
+							[] -> case reads str :: [(Int, String)] of
+								[(x,"")] -> case x >= 0 && x < (length objects) of
+										True -> (Just (objects !! x), "")
+										False -> (Nothing, printf "Object with index %d does not exist." x)
+								_ -> (Nothing, "Can't parse an object." ++ str)
+							(y:[]) -> (Just y, "")
+							(ys) -> (Nothing, describeObjects "Ambiguous objects: " ys)
+						
+	
+type ObjectShowPrefix = (String, String)
+type IntroString = String
+type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
+type ShowObjectsBoundStrings = [String]
 
 object :: Item -> Object
 object itm = Object {oItem = itm, oName = objectName' itm, oDescription = objectDescription' itm, oPickupFailMsg = objectPickupFailMessage' itm}
@@ -73,11 +98,6 @@ showObjects pref lFuncDescr boundStrs xs = snd pref ++ (showLeftBracket boundStr
 	where
 		showObjects' (x:[]) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showRightBracket boundStrs)
 		showObjects' (x:xs) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showDelimiter boundStrs) ++ showObjects' xs (modifyObjectShowingFunc lFuncDescr)
-
-type ObjectShowPrefix = (String, String)
-type IntroString = String
-type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
-type ShowObjectsBoundStrings = [String]
 
 showLeftBracket :: ShowObjectsBoundStrings -> String
 showRightBracket :: ShowObjectsBoundStrings -> String
