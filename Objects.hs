@@ -34,17 +34,17 @@ isPickupable = flip elem [homeUmbrella1] . oItem
 
 ----------------------
 
-readsObject :: String -> Objects -> Objects
-readsObject [] _ = []
-readsObject _ [] = []
-readsObject s objects = filter (\x -> (capitalizedOName x) == capitalizedS) objects
+readObject :: String -> Objects -> Objects
+readObject [] _ = []
+readObject _ [] = []
+readObject s objects = filter (\x -> (capitalizedOName x) == capitalizedS) objects
 	where
 		capitalizedS = capitalize s
 		capitalizedOName = capitalize . oName
 
 parseObject :: String -> Objects -> (Maybe Object, String)
 parseObject _ [] = (Nothing, "No objects to match.")
-parseObject str objects = case readsObject str objects of
+parseObject str objects = case readObject str objects of
 							[] -> case reads str :: [(Int, String)] of
 								[(x,"")] -> case x >= 0 && x < (length objects) of
 										True -> (Just (objects !! x), "")
@@ -126,7 +126,7 @@ showInventory :: InventoryObjects -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
 
 enumerateObjects :: IntroString -> Objects -> String
-enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 1) ["","",""]
+enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 0) ["","",""]
 
 matchedObjects :: ItemName -> Objects -> Objects
 matchedObjects _ [] = []

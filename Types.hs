@@ -72,14 +72,17 @@ data Command =
 			| Help
 	deriving (Eq, Show, Read)
 
-type ParseResult = (Maybe Command, String)
+data InputCommand = QualifyPickup Objects
 	
+type ParseResult = (Maybe Command, String)
+
 type InputString = String
 type OutputMessage = String
+type InputOutputString = String
 
 data GameAction =
 				PrintMessage OutputMessage
 				| QuitGame OutputMessage
 				| ReadUserInput
-				| ReadMessagedUserInput OutputMessage
+				| ReadMessagedUserInput InputOutputString InputCommand
 				| SaveState GameState OutputMessage

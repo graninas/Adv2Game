@@ -19,7 +19,7 @@ walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,
 			roomAlreadyLongDescribed = isRoomLongDescribed roomsDescribedEarlier room
 			roomsDescribedEarlier = gsRoomLongDescribed curGS
 			locDescription = describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room)
-			
+
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
@@ -43,9 +43,11 @@ pickup obj curGS = curGS {gsLocations = (locationsWithoutObject locs room obj), 
 		inv = gsInvObjects curGS
 
 tryPickup :: ItemName -> Objects -> GameState -> GameAction
-tryPickup itmName fromObjects curGS = case matchedObjects itmName fromObjects of
+tryPickup itmName fromObjects curGS = do
+									let matched = matchedObjects itmName fromObjects
+									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
 										(x:[]) -> case isPickupable x of
 												True -> SaveState (pickup x curGS) (successPickupingObjectMsg x)
 												False -> PrintMessage (failurePickupingObjectMsg x)
-										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs)
+										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
