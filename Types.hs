@@ -65,6 +65,7 @@ data Command =
 			Walk Direction
 			| Look
 			| Investigate ItemName
+			| Inv ItemName 			-- short version of Investigate
 			| Inventory
 			| Pickup ItemName		-- pickups if itemName parsed
 			| Take String			-- tries pickup object by string

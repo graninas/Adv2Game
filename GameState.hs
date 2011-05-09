@@ -14,7 +14,7 @@ tryInvestigateItem itmName fromObjects = do
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
 										(x:[]) -> PrintMessage (oDescription x)
-										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects:" matched)
+										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
 walkTo :: Room -> GameState -> (String, GameState)
 walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,

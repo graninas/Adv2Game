@@ -22,12 +22,12 @@ objectDescription' itm
 	| itm == homeUmbrella2 = "Nice blue Umbrella."
 	| itm == homePhone = "The Phone has some voice messages for you."
 	| itm == homePhone2 = "Broken electric phone."
-	| otherwise = printf "There is nothing special about %s." (show . fst $ itm)
+	| otherwise = printf "There is nothing special about %s." (objectName' itm)
 
 objectPickupFailMessage' :: Item -> String
 objectPickupFailMessage' itm
 	| itm == homePhone = "Phone drawes a wires and strikes against the table!"
-	| otherwise = printf "You can't take a %s." (show . fst $ itm)
+	| otherwise = printf "You can't take a %s." (objectName' itm)
 
 isPickupable :: Object -> Bool
 isPickupable = flip elem [homeUmbrella1] . oItem
@@ -112,13 +112,13 @@ describeObjects [] = showObjects ([], "\nThere are some objects here: ") standar
 describeObjects str = showObjects ([], str) standartObjectShowingF standartBoundStrs
 
 investigateObjects :: IntroString -> Objects -> String
-investigateObjects str = showObjects ([], str) ((\x n -> printf "\n %d %s: %s" n (showObject x) (oDescription x)), \y -> y + 1, 0) ["","",""]
+investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (oDescription x)), \_ -> 0, 0) ["","",""]
 
 showInventory :: InventoryObjects -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
 
 enumerateObjects :: IntroString -> Objects -> String
-enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%s: " n ++ showObject x), \y -> y + 1, 0) ["","",""]
+enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: %s" n (showObject x)), \y -> y + 1, 0) ["","",""]
 
 matchedObjects :: ItemName -> Objects -> Objects
 matchedObjects _ [] = []
