@@ -10,18 +10,22 @@ import Control.Monad.State (get, gets, StateT(..), evalStateT,
 import Char(isDigit, digitToInt)
 
 
+parseCommand :: String -> ParseResult
 parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
 					[(x,"")] -> (Just x, [])
 					_ -> case head capStrings of
 						'Q' -> (Just Quit, "Be seen you...")
 						'I' -> (Just Inventory, [])
-						'P' -> case reads wordsAfterCommand of
-							[(y, "")] -> (Just (Pickup y), [])
-							_ -> (Nothing, "Pickup what?")
+						'P' -> case wordsAfterCommand of
+							[] -> (Nothing, "Pickup what?")
+							otherwise -> case reads wordsAfterCommand of
+										[(y, "")] -> (Just (Pickup y), [])
+										_ -> (Just (Take wordsAfterCommand), [])
 						_ -> (Nothing, "Can't understand a command.")
-						where wordsAfterCommand = unwords . tail . words $ capStrings
-	where capStrings = capitalize $ str
+	where
+		capStrings = capitalize $ str
+		wordsAfterCommand = unwords . tail . words $ capStrings
 
 run' :: InputString -> GameState -> GameAction
 run' inputStr curGS = do
@@ -37,6 +41,7 @@ run' inputStr curGS = do
 			(Just Look, _) -> PrintMessage (lookAround currentRoom roomObjects)
 			(Just (Investigate itmName), _) -> tryInvestigateItem itmName roomObjects inventory
 			(Just (Pickup itmName), _) -> tryPickup itmName roomObjects curGS
+			(Just (Take str), _) -> tryTake str roomObjects curGS
 
 run :: InputString -> GS ()
 run inputStr = do

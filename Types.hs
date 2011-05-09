@@ -66,11 +66,14 @@ data Command =
 			| Look
 			| Investigate ItemName
 			| Inventory
-			| Pickup ItemName
+			| Pickup ItemName		-- pickups if itemName parsed
+			| Take String			-- tries pickup object by string
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
 
+type ParseResult = (Maybe Command, String)
+	
 type InputString = String
 type OutputMessage = String
 
