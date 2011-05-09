@@ -49,27 +49,7 @@ data Location = Location {
 } deriving (Eq)
 
 type Locations = [Location]
-
-data Command =
-			Walk Direction
-			| Look
-			| Investigate ItemName
-			| Inventory
-			| Pickup ItemName
-			| Quit
-			| Help
-	deriving (Eq, Show, Read)
-{-
-type QualifiedInput = (Command, String) -- maybe command, qualifiedString
-
-data GameAction =
-				PrintMessage
-				| QuitGame
-				| ReadUserInput
-				| SaveState
-type GameActionResult = (GameAction, String, Maybe GameState, Maybe QualifiedInput) -- game action, message for user, maybe gamestate, maybe qualinput
-type PickupResult = (String, Maybe GameState, Maybe QualifiedInput)
--}
+	
 data GameState = GameState {
 	gsLocations :: Locations,
 	gsCurrentRoom :: Room,
@@ -80,3 +60,23 @@ data GameState = GameState {
 newtype GS a = GS {
 	runGameState :: StateT GameState IO a
 } deriving (Monad, MonadIO, MonadState GameState)
+
+data Command =
+			Walk Direction
+			| Look
+			| Investigate ItemName
+			| Inventory
+			| Pickup ItemName
+			| Quit
+			| Help
+	deriving (Eq, Show, Read)
+
+type InputString = String
+type OutputMessage = String
+
+data GameAction =
+				PrintMessage OutputMessage
+				| QuitGame OutputMessage
+				| ReadUserInput
+				| ReadMessagedUserInput OutputMessage
+				| SaveState GameState OutputMessage

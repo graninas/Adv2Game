@@ -63,8 +63,8 @@ successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
 failurePickupingObjectMsg :: Object -> String
 failurePickupingObjectMsg = oPickupFailMsg
 
-canSeeObject :: Objects -> ItemName -> Bool
-canSeeObject objects itemN = not . null $ thereObjects
+canSeeItem :: Objects -> ItemName -> Bool
+canSeeItem objects itemN = not . null $ thereObjects
 	where thereObjects = thereAreObjects objects itemN
 
 showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
@@ -108,7 +108,7 @@ showInventory = showObjects ("No objects in your inventory.", "You have: ") stan
 enumerateObjects :: IntroString -> Objects -> String
 enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 1) ["","",""]
 
-mathedObjects :: ItemName -> Objects -> Objects
-mathedObjects _ [] = []
-mathedObjects itmNm objects = filter (\x -> (fst . oItem $ x) == itmNm) objects
+matchedObjects :: ItemName -> Objects -> Objects
+matchedObjects _ [] = []
+matchedObjects itmNm objects = filter (\x -> (fst . oItem $ x) == itmNm) objects
 

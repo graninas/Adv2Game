@@ -23,16 +23,6 @@ parseCommand str = case reads capStrings of
 						where wordsAfterCommand = unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
-type InputString = String
-type OutputMessage = String
-
-data GameAction =
-				PrintMessage OutputMessage
-				| QuitGame OutputMessage
-				| ReadUserInput
-				| ReadMessagedUserInput OutputMessage
-				| SaveState GameState OutputMessage
-
 run' :: InputString -> GameState -> GameAction
 run' inputStr curGS = do
 		let currentRoom = gsCurrentRoom curGS
@@ -46,11 +36,12 @@ run' inputStr curGS = do
 			(Just Inventory, _) -> PrintMessage (showInventory inventory)
 			(Just Look, _) -> PrintMessage (lookAround currentRoom roomObjects)
 			(Just (Investigate itmName), _) -> tryInvestigateItem itmName roomObjects inventory
-			(Just (Pickup itmName), _) -> tryPickup itmName curGS
+			(Just (Pickup itmName), _) -> tryPickup itmName roomObjects curGS
 
 run :: InputString -> GS ()
 run inputStr = do
-	gameAction <- run' inputStr get
+	curGS <- get
+	gameAction <- return (run' inputStr curGS)
 	case gameAction of
 		QuitGame outMsg -> ioOutMsgGS outMsg >> return ()
 		PrintMessage outMsg -> ioOutMsgGS outMsg >> run ""

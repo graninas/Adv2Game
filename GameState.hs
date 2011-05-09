@@ -6,27 +6,14 @@ import Directions
 import Objects
 
 import Text.Printf(printf)
+import Char(isDigit, digitToInt)
 
-
-newGameState :: Locations -> Room -> LongDescribedRooms -> InventoryObjects -> GameState
-newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState {
-	gsLocations = newLocations,
-	gsCurrentRoom = newRoom,
-	gsRoomLongDescribed = newLongDescribedRooms,
-	gsInvObjects = newInventory
-	}
-	
---tryRiseObject :: Object -> (Maybe Object, String)
---tryRiseObject obj = if isPickupable obj then (Just obj, showObject obj ++ " added to your inventory.") else (Nothing, oPickupFailMsg obj)
---pickupObject :: ItemName -> GameState -> (String, GameState)
---pickupObject itmName curGS = (locDescription, newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
-
-tryInvestigateItem :: ItemName -> Objects -> Inventory -> GameAction
+tryInvestigateItem :: ItemName -> Objects -> InventoryObjects -> GameAction
 tryInvestigateItem itmName roomObjects inventory = undefined
 
 walkTo :: Room -> GameState -> (String, GameState)
 walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,
-											gsRoomLongDescribed = newLongDescribedRooms}) --newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS)
+											gsRoomLongDescribed = newLongDescribedRooms})
 		where
 			newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
 			roomAlreadyLongDescribed = isRoomLongDescribed roomsDescribedEarlier room
@@ -50,25 +37,16 @@ parseObject str objects = case read str of
 							False -> Nothing
 							
 pickup :: Object -> GameState -> GameState
-pickup = undefined
+pickup obj curGS = curGS {gsLocations = (locationsWithoutObject locs room obj), gsInvObjects = obj : inv}
+	where
+		locs = gsLocations curGS
+		room = gsCurrentRoom curGS
+		inv = gsInvObjects curGS
 
-tryPickup' obj curGS = case isPickupable obj of
-							False -> return (failurePickupingObjectMsg obj, Nothing, False)
-							True -> return (successPickupingObjectMsg obj, Just (pickup obj curGS), False)		
-
-tryPickup :: ItemName -> GameState -> GameAction
-tryPickup itmName curGS = case canSeeObject (roomObjects ++ inventory) itmName of -- canSeeObject -> canSeeItem
-			False -> return (notVisibleObjectError itmName, Nothing, False)
-			True -> case exactlyObject of
-				(Nothing, False, str) -> return (str, Nothing, False)
-				(Just x, False, str) -> tryPickup' x curGS
-				(_, True, str) -> return (str, Nothing, True)
-			where
-				currentRoom = gsCurrentRoom curGS
-				roomObjects = locationObjects (gsLocations curGS) currentRoom
-				inventory = gsInvObjects curGS
-				matchedList = mathedObjects itmName roomObjects
-				exactlyObject = case matchedList of
-					[] -> (Nothing, False, "Error: no objects matched.")
-					(x:[]) -> (Just x, False, successPickupingObjectMsg x)
-					(xs) -> (Nothing, True, enumerateObjects "What object of these variants: " xs)
+tryPickup :: ItemName -> Objects -> GameState -> GameAction
+tryPickup itmName roomObjects curGS = case matchedObjects itmName roomObjects of
+										[] -> PrintMessage (notVisibleObjectError itmName)
+										(x:[]) -> case isPickupable x of
+												True -> SaveState (pickup x curGS) (successPickupingObjectMsg x)
+												False -> PrintMessage (failurePickupingObjectMsg x)
+										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs)
