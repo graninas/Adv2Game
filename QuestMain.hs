@@ -23,53 +23,45 @@ parseCommand str = case reads capStrings of
 						where wordsAfterCommand = unwords . tail . words $ capStrings
 	where capStrings = capitalize $ str
 
-run' :: String -> QualifiedInput -> GS GameActionResult
-run' msg qualifiedInput = do
-		curGS <- get
+type InputString = String
+type OutputMessage = String
+
+data GameAction =
+				PrintMessage OutputMessage
+				| QuitGame OutputMessage
+				| ReadUserInput
+				| ReadMessagedUserInput OutputMessage
+				| SaveState GameState OutputMessage
+
+run' :: InputString -> GameState -> GameAction
+run' inputStr curGS = do
 		let currentRoom = gsCurrentRoom curGS
 		let roomObjects = locationObjects (gsLocations curGS) currentRoom
 		let inventory = gsInvObjects curGS
-		let pickupRoutine itmName = do
-									(pickupingMsg, maybeNewState, needSelectObject) <- tryPickup itmName curGS
-									case needSelectObject of
-										False -> return (SaveState, pickupingMsg, maybeNewState)
-										True ->  return (ReadUserInputForPickup, pickupingMsg, Nothing)
-		case qualifiedInput of
-			(False, _) -> case parseCommand msg of
-					(Nothing, []) -> return (ReadUserInput, [], Nothing)
-					(Nothing, str) -> return (PrintMessage, str, Nothing)
-					(Just Quit, _) -> return (QuitGame, "Be seen you...", Nothing)
-					(Just (Walk dir), _) -> do
-										(walkMsg, newState) <- tryWalk dir curGS
-										return (SaveState, walkMsg, newState)
-					(Just Inventory, _) -> return (PrintMessage, showInventory inventory, Nothing)
-					(Just Look, _) -> return (PrintMessage, lookAround currentRoom roomObjects, Nothing)
-					(Just (Investigate itmName), _) -> case canSeeObject (roomObjects ++ inventory) itmName of
-							True -> return (PrintMessage, investigateObject itmName (roomObjects ++ inventory), Nothing)
-							False -> return (PrintMessage, notVisibleObjectError itmName, Nothing)
-					(Just (Pickup itmName), _) -> pickupRoutine itmName
-			(True, maybeGameAction) -> case maybeGameAction of
-									Nothing -> undefined -- Error.
-									Just ReadUserInputForPickup -> tryContinuePickup 
-		
+		case parseCommand inputStr of
+			(Nothing, []) -> ReadUserInput
+			(Nothing, str) -> PrintMessage str
+			(Just Quit, _) -> QuitGame "Be seen you..."
+			(Just (Walk dir), _) -> tryWalk dir curGS
+			(Just Inventory, _) -> PrintMessage (showInventory inventory)
+			(Just Look, _) -> PrintMessage (lookAround currentRoom roomObjects)
+			(Just (Investigate itmName), _) -> tryInvestigateItem itmName roomObjects inventory
+			(Just (Pickup itmName), _) -> tryPickup itmName curGS
 
-
-run :: String -> QualifiedInput -> GS ()
-run msg qualInput = do
-	(gameAction, str, maybeGameState) <- run' msg qualInput
+run :: InputString -> GS ()
+run inputStr = do
+	gameAction <- run' inputStr get
 	case gameAction of
-		QuitGame -> ioOutMsgGS str >> return ()
-		PrintMessage -> ioOutMsgGS str >> run "" qualInput
-		ReadUserInput -> ioInMsgGS >>= \x -> run x qualInput
-		SaveState -> case maybeGameState of
-				Just newState -> ioOutMsgGS str >> put newState >> run "" qualInput
-				Nothing -> ioOutMsgGS str >> run "" qualInput
-		ReadUserInputForPickup -> ioInMsgGS >>= \x -> run x (True, Just ReadUserInputForPickup)
+		QuitGame outMsg -> ioOutMsgGS outMsg >> return ()
+		PrintMessage outMsg -> ioOutMsgGS outMsg >> run ""
+		ReadUserInput -> ioInMsgGS >>= run
+		ReadMessagedUserInput outMsg -> ioOutMsgGS outMsg >> ioInMsgGS >>= run
+		SaveState newState outMsg -> ioOutMsgGS outMsg >> put newState >> run ""
 
 main :: IO ()
 main = do
 	putStrLn $ lookAround startRoom startRoomObjects
-	x <- evalStateT (runGameState (run [] (False, Nothing))) initWorld
+	x <- evalStateT (runGameState (run "")) initWorld
 	putStrLn ""
 		where
 			startRoom = gsCurrentRoom $ initWorld

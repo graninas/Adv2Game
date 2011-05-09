@@ -20,7 +20,10 @@ newGameState newLocations newRoom newLongDescribedRooms newInventory = GameState
 --tryRiseObject obj = if isPickupable obj then (Just obj, showObject obj ++ " added to your inventory.") else (Nothing, oPickupFailMsg obj)
 --pickupObject :: ItemName -> GameState -> (String, GameState)
 --pickupObject itmName curGS = (locDescription, newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS))
-	
+
+tryInvestigateItem :: ItemName -> Objects -> Inventory -> GameAction
+tryInvestigateItem itmName roomObjects inventory = undefined
+
 walkTo :: Room -> GameState -> (String, GameState)
 walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,
 											gsRoomLongDescribed = newLongDescribedRooms}) --newGameState (gsLocations curGS) room newLongDescribedRooms (gsInvObjects curGS)
@@ -33,10 +36,10 @@ walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,
 canWalk :: GameState -> Direction -> Maybe Room
 canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
 
-tryWalk :: Direction -> GameState -> GS (String, Maybe GameState)
+tryWalk :: Direction -> GameState -> GameAction
 tryWalk dir curGS = case canWalk curGS dir of
-						Nothing -> return (failureWalkingMsg dir, Nothing)
-						Just room -> return (successWalkingMsg room dir ++ "\n" ++ newLocDescr, Just newGS)
+						Nothing -> PrintMessage (failureWalkingMsg dir)
+						Just room -> SaveState newGS (successWalkingMsg room dir ++ "\n" ++ newLocDescr)
 							where (newLocDescr, newGS) = walkTo room curGS
 
 parseObject :: String -> Objects -> Maybe Object
@@ -51,15 +54,9 @@ pickup = undefined
 
 tryPickup' obj curGS = case isPickupable obj of
 							False -> return (failurePickupingObjectMsg obj, Nothing, False)
-							True -> return (successPickupingObjectMsg obj, Just (pickup obj curGS), False)
+							True -> return (successPickupingObjectMsg obj, Just (pickup obj curGS), False)		
 
-tryContinuePickup :: String -> GameState -> GS PickupResult
-tryContinuePickup strCmd curGS = case parseObject of
-		Nothing -> return ("Never mind.", Nothing, False)
-		Just obj -> 
-		
-
-tryPickup :: ItemName -> GameState -> GS PickupResult
+tryPickup :: ItemName -> GameState -> GameAction
 tryPickup itmName curGS = case canSeeObject (roomObjects ++ inventory) itmName of -- canSeeObject -> canSeeItem
 			False -> return (notVisibleObjectError itmName, Nothing, False)
 			True -> case exactlyObject of

@@ -59,13 +59,17 @@ data Command =
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
+{-
+type QualifiedInput = (Command, String) -- maybe command, qualifiedString
 
-data GameAction = PrintMessage | QuitGame | ReadUserInput | SaveState | ReadUserInputForPickup
-type GameActionResult = (GameAction, String, Maybe GameState)
-type QualifiedInput = (Bool, Maybe Command)
-
+data GameAction =
+				PrintMessage
+				| QuitGame
+				| ReadUserInput
+				| SaveState
+type GameActionResult = (GameAction, String, Maybe GameState, Maybe QualifiedInput) -- game action, message for user, maybe gamestate, maybe qualinput
 type PickupResult = (String, Maybe GameState, Maybe QualifiedInput)
-
+-}
 data GameState = GameState {
 	gsLocations :: Locations,
 	gsCurrentRoom :: Room,
