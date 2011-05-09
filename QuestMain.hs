@@ -26,22 +26,23 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 
 parseCommand :: String -> ParseResult
 parseCommand [] = (Nothing, [])
-parseCommand str = case reads capStrings of
-					[(x,"")] -> (Just x, [])
-					_ -> case head capedWords of
-						"Q" -> (Just Quit, "Be seen you...")
-						"I" -> (Just Inventory, [])
-						"H" -> (Just Help, [])
-						"P" -> case wordsAfterCommand of
-							[] -> (Nothing, "Pickup what?")
-							otherwise -> case reads wordsAfterCommand of
-										[(y, "")] -> (Just (Pickup y), [])
-										_ -> (Nothing, "Can't understand a command.")
-						_ -> (Nothing, "Can't understand a command.")
-	where
-		capStrings = capitalize $ str
-		capedWords = words capStrings
-		wordsAfterCommand = unwords . tail $ capedWords
+parseCommand str = let
+					capStrings = capitalize $ str
+					capedWords = words capStrings
+					wordsAfterCommand = unwords . tail $ capedWords in
+						case reads capStrings of
+							[(x,"")] -> (Just x, [])
+							_ -> case head capedWords of
+								"Take" -> (Just (Take wordsAfterCommand), [])
+								"Q" -> (Just Quit, "Be seen you...")
+								"I" -> (Just Inventory, [])
+								"H" -> (Just Help, [])
+								"P" -> case wordsAfterCommand of
+									[] -> (Nothing, "Pickup what?")
+									otherwise -> case reads wordsAfterCommand of
+												[(y, "")] -> (Just (Pickup y), [])
+												_ -> (Nothing, "Can't understand a command.")
+								_ -> (Nothing, "Can't understand a command.")
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do
@@ -58,7 +59,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Just Look, _) -> PrintMessage (lookAround currentRoom roomObjects)
 				(Just (Investigate itmName), _) -> tryInvestigateItem itmName (roomObjects ++ inventory)
 				(Just (Pickup itmName), _) -> tryPickup itmName roomObjects curGS
-				(Just (Take str), _) -> undefined
+				(Just (Take str), _) ->  tryTake str roomObjects curGS
 				(Just (Inv itmName), _) -> tryInvestigateItem itmName (roomObjects ++ inventory)
 				(Just Help, _) -> PrintMessage helpMessage
 			Just (QualifyPickup objects) -> tryTake inputStr objects curGS
