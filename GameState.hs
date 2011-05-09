@@ -48,11 +48,29 @@ pickup obj curGS = curGS {gsLocations = (locationsWithoutObject locs room obj), 
 		inv = gsInvObjects curGS
 
 tryPickup :: ItemName -> Objects -> GameState -> GameAction
-tryPickup itmName fromObjects curGS = do
-									let matched = matchedObjects itmName fromObjects
+tryPickup itmName fromObjects curGS = let matched = matchedObjects itmName fromObjects in
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
 										(x:[]) -> case isPickupable x of
 												True -> SaveState (pickup x curGS) (successPickupingObjectMsg x)
 												False -> PrintMessage (failurePickupingObjectMsg x)
 										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
+
+tryWeld :: ItemName -> ItemName -> Objects -> GameState -> GameAction
+tryWeld itmName1 itmName2 fromObjects curGS =
+		let
+			matched1 = matchedObjects itmName1 fromObjects
+			matched2 = matchedObjects itmName2 fromObjects
+			tooMany i os = PrintMessage (describeObjects (printf "Too many matches of %s: " (show i)) os)
+		in
+		case matched1 of
+			[] -> PrintMessage $ notVisibleObjectError $ itmName1
+			(x:[]) -> case matched2 of
+					[] -> PrintMessage $ notVisibleObjectError $ itmName2
+					(y:[]) -> case weld x y of
+						(Just obj, str) -> PrintMessage str
+						(Nothing, str) ->  PrintMessage str
+					(ys) -> tooMany itmName2 matched2
+			(xs) -> tooMany itmName1 matched1
+
+			

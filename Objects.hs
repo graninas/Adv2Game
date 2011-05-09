@@ -22,6 +22,9 @@ objectDescription' itm
 	| itm == homeUmbrella2 = "Nice blue Umbrella."
 	| itm == homePhone = "The Phone has some voice messages for you."
 	| itm == homePhone2 = "Broken electric phone."
+	| itm == rope = "Good 30 meters rope."
+	| itm == homeHook = "Massive steel hook nailed to wall."
+	| itm == ropeOnHook = "Rope looks tight."
 	| otherwise = printf "There is nothing special about %s." (objectName' itm)
 
 objectPickupFailMessage' :: Item -> String
@@ -30,7 +33,12 @@ objectPickupFailMessage' itm
 	| otherwise = printf "You can't take a %s." (objectName' itm)
 
 isPickupable :: Object -> Bool
-isPickupable = flip elem [homeUmbrella1] . oItem
+isPickupable = flip elem [homeUmbrella1, rope] . oItem
+
+weld :: Object -> Object -> (Maybe Object, String)
+weld o1 o2
+	| oItem o1 == rope && oItem o2 == homeHook = (Just $ object ropeOnHook, "You successfully tied rope to the hook.")
+	| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject o1) (showObject o2))
 
 ----------------------
 

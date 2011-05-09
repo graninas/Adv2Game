@@ -18,6 +18,8 @@ data ItemName =
 			| Table
 			| Drawer
 			| Umbrella
+			| Rope
+			| Hook
 	deriving (Show, Eq, Read)
 	
 type Item = (ItemName, Integer)
@@ -69,6 +71,7 @@ data Command =
 			| Inventory
 			| Pickup ItemName		-- pickups if itemName parsed
 			| Take String			-- tries pickup object by string
+			| Weld ItemName ItemName
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
