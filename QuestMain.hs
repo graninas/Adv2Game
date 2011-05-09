@@ -22,7 +22,10 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"Pickup <ItemName> or P <ItemName>",
 	"Take <Object>",
 	"Quit or Q",
-	"Help or H"]
+	"Help or H",
+	"", "Here <Object> is full name of object and <ItemName> is it's simple name.",
+	"For example: 'Broken Phone' - object full name and 'Phone' is it's simple name.",
+	"Input is case insensitive."]
 
 parseCommand :: String -> ParseResult
 parseCommand [] = (Nothing, [])
@@ -41,7 +44,7 @@ parseCommand str = let
 									[] -> (Nothing, "Pickup what?")
 									otherwise -> case reads wordsAfterCommand of
 												[(y, "")] -> (Just (Pickup y), [])
-												_ -> (Nothing, "Can't understand a command.")
+												_ -> (Just (Take wordsAfterCommand), [])
 								_ -> (Nothing, "Can't understand a command.")
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
