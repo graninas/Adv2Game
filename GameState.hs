@@ -8,8 +8,13 @@ import Objects
 import Text.Printf(printf)
 import Char(isDigit, digitToInt)
 
-tryInvestigateItem :: ItemName -> Objects -> InventoryObjects -> GameAction
-tryInvestigateItem itmName roomObjects inventory = undefined
+tryInvestigateItem :: ItemName -> Objects -> GameAction
+tryInvestigateItem itmName fromObjects = do
+									let matched = matchedObjects itmName fromObjects
+									case matched of
+										[] -> PrintMessage (notVisibleObjectError itmName)
+										(x:[]) -> PrintMessage (oDescription x)
+										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects:" matched)
 
 walkTo :: Room -> GameState -> (String, GameState)
 walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,

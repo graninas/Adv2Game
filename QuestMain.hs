@@ -14,18 +14,19 @@ parseCommand :: String -> ParseResult
 parseCommand [] = (Nothing, [])
 parseCommand str = case reads capStrings of
 					[(x,"")] -> (Just x, [])
-					_ -> case head capStrings of
-						'Q' -> (Just Quit, "Be seen you...")
-						'I' -> (Just Inventory, [])
-						'P' -> case wordsAfterCommand of
+					_ -> case head capedWords of
+						"Q" -> (Just Quit, "Be seen you...")
+						"I" -> (Just Inventory, [])
+						"P" -> case wordsAfterCommand of
 							[] -> (Nothing, "Pickup what?")
 							otherwise -> case reads wordsAfterCommand of
 										[(y, "")] -> (Just (Pickup y), [])
-										_ -> (Just (Take wordsAfterCommand), [])
+										_ -> (Nothing, "Can't understand a command.")
 						_ -> (Nothing, "Can't understand a command.")
 	where
 		capStrings = capitalize $ str
-		wordsAfterCommand = unwords . tail . words $ capStrings
+		capedWords = words capStrings
+		wordsAfterCommand = unwords . tail $ capedWords
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do
@@ -40,7 +41,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Just (Walk dir), _) -> tryWalk dir curGS
 				(Just Inventory, _) -> PrintMessage (showInventory inventory)
 				(Just Look, _) -> PrintMessage (lookAround currentRoom roomObjects)
-				(Just (Investigate itmName), _) -> tryInvestigateItem itmName roomObjects inventory
+				(Just (Investigate itmName), _) -> tryInvestigateItem itmName (roomObjects ++ inventory)
 				(Just (Pickup itmName), _) -> tryPickup itmName roomObjects curGS
 				(Just (Take str), _) -> undefined
 			Just (QualifyPickup objects) -> tryTake inputStr objects curGS

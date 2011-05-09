@@ -68,15 +68,8 @@ itemName = fst . oItem
 showObject :: Object -> String
 showObject = oName
 
-thereAreObjects :: Objects -> ItemName -> Objects
-thereAreObjects objects itemN = filter (\x -> (fst . oItem $ x) == itemN) objects
-
 notVisibleObjectError :: ItemName -> String
 notVisibleObjectError itmNm = printf "You don't see any %s here." (show itmNm)
-
-investigateObject :: ItemName -> Objects -> String
-investigateObject itemN objects = if not . null $ thereObjects then oDescription . head $ thereObjects else notVisibleObjectError itemN
-	where thereObjects = thereAreObjects objects itemN
 
 locationObjects :: Locations -> Room -> Objects
 locationObjects [] _ = []
@@ -87,10 +80,6 @@ successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
 
 failurePickupingObjectMsg :: Object -> String
 failurePickupingObjectMsg = oPickupFailMsg
-
-canSeeItem :: Objects -> ItemName -> Bool
-canSeeItem objects itemN = not . null $ thereObjects
-	where thereObjects = thereAreObjects objects itemN
 
 showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
 showObjects pref _          _         [] = fst pref
@@ -122,11 +111,14 @@ describeObjects :: IntroString -> Objects -> String
 describeObjects [] = showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs
 describeObjects str = showObjects ([], str) standartObjectShowingF standartBoundStrs
 
+investigateObjects :: IntroString -> Objects -> String
+investigateObjects str = showObjects ([], str) ((\x n -> printf "\n %d %s: %s" n (showObject x) (oDescription x)), \y -> y + 1, 0) ["","",""]
+
 showInventory :: InventoryObjects -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
 
 enumerateObjects :: IntroString -> Objects -> String
-enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: " n ++ showObject x), \y -> y + 1, 0) ["","",""]
+enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%s: " n ++ showObject x), \y -> y + 1, 0) ["","",""]
 
 matchedObjects :: ItemName -> Objects -> Objects
 matchedObjects _ [] = []

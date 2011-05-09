@@ -5,8 +5,8 @@ import Control.Monad (mapM_)
 import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..))
 							
 data Room = SouthRoom | NorthRoom | Corridor | NoRoom
-	deriving (Show, Eq)	-- Show позволяет отобразить имя "SouthRoom" или "NorthRoom" встроенными средствами.
-						-- Eq позволяет сравнивать эти элементы.
+	deriving (Show, Eq)
+
 type Rooms = [Room]
 type LongDescribedRooms = Rooms
 
