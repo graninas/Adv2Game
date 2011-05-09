@@ -9,6 +9,20 @@ import Control.Monad.State (get, gets, StateT(..), evalStateT,
                             put, MonadState(..), liftIO)
 import Char(isDigit, digitToInt)
 
+helpMessage :: String
+helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
+	"Author: Granin A. S.",
+	"mailto: graninas@gmail.com",
+	"",
+	"Game commands:",
+	"Walk <Direction>",
+	"Look",
+	"Investigate <ItemName> or Inv <ItemName>",
+	"Inventory or I",
+	"Pickup <ItemName> or P <ItemName>",
+	"Take <Object>",
+	"Quit or Q",
+	"Help or H"]
 
 parseCommand :: String -> ParseResult
 parseCommand [] = (Nothing, [])
@@ -17,6 +31,7 @@ parseCommand str = case reads capStrings of
 					_ -> case head capedWords of
 						"Q" -> (Just Quit, "Be seen you...")
 						"I" -> (Just Inventory, [])
+						"H" -> (Just Help, [])
 						"P" -> case wordsAfterCommand of
 							[] -> (Nothing, "Pickup what?")
 							otherwise -> case reads wordsAfterCommand of
@@ -45,6 +60,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Just (Pickup itmName), _) -> tryPickup itmName roomObjects curGS
 				(Just (Take str), _) -> undefined
 				(Just (Inv itmName), _) -> tryInvestigateItem itmName (roomObjects ++ inventory)
+				(Just Help, _) -> PrintMessage helpMessage
 			Just (QualifyPickup objects) -> tryTake inputStr objects curGS
 
 run :: InputString -> Maybe InputCommand -> GS ()
