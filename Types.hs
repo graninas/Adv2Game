@@ -62,8 +62,9 @@ data Command =
 
 data GameAction = PrintMessage | QuitGame | ReadUserInput | SaveState | ReadUserInputForPickup
 type GameActionResult = (GameAction, String, Maybe GameState)
+type QualifiedInput = (Bool, Maybe Command)
 
-type PickupResult = (String, Maybe GameState, Bool) -- Message, Maybe new GameState, isNeedToSelectOneObject
+type PickupResult = (String, Maybe GameState, Maybe QualifiedInput)
 
 data GameState = GameState {
 	gsLocations :: Locations,
