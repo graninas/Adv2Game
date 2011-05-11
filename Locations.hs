@@ -29,7 +29,7 @@ locationObjects' room = case room of
 	SouthRoom -> [object homeDrawer, object homePhone, object homeUmbrella1, object homeTable, object rope, object homeHook]
 	NorthRoom -> [object homeUmbrella2]
 	_ -> []
-
+	
 ----------------------
 	
 	
@@ -37,56 +37,37 @@ location :: Room -> Location
 location room = Location {
 							locRoom = room,
 							locPaths = locationPaths' room,
-							locShortDesc = locationShortDesc' room,
-							locLongDesc = locationLongDesc' room,
-							locObjects = locationObjects' room
+							locShortDescription = locationShortDesc' room,
+							locLongDescription = locationLongDesc' room,
+							locObjects = locationObjects' room,
+							locLongDescribed = False
 							}
 
-initWorld :: GameState
-initWorld = GameState {
-	gsLocations = [location SouthRoom, location NorthRoom],
-	gsCurrentRoom = SouthRoom,
-	gsRoomLongDescribed = [SouthRoom],
-	gsInvObjects = []
-}
+lookAround :: Location -> String
+lookAround loc = locLongDescription loc ++ describeObjects [] (locObjects loc)
 
-lookAround :: Room -> Objects -> String
-lookAround room objects = (locLongDesc . location $ room) ++ (describeObjects [] objects)
-
-isRoomLongDescribed :: Rooms -> Room -> Bool
-isRoomLongDescribed = flip elem
-
-describeLocation :: Bool -> Room -> Objects -> String
-describeLocation False room objects = (locLongDesc . location $ room) ++ describeObjects [] objects
-describeLocation True  room objects = (locShortDesc . location $ room) ++ describeObjects [] objects
-
-locationWithoutObject :: Location -> Object -> Location
-locationWithoutObject loc obj = Location {
-		locRoom = locRoom loc,
-		locPaths = locPaths loc,
-		locShortDesc = locShortDesc loc,
-		locLongDesc = locLongDesc loc,
-		locObjects = filter (/=obj) (locObjects loc)}
-
-locationsWithoutObject :: Locations -> Room -> Object -> Locations
-locationsWithoutObject [] _ _ = []
-locationsWithoutObject locs room obj = [res | let cl = (changedLocation locs), let unfls = filteredUnequal locs, res <- (cl ++ unfls) ]
+describeLocation :: Location -> Objects -> (String, Maybe Location)
+describeLocation loc objects = case locLongDescribed loc of
+								False -> (longDescr, Just (loc {locLongDescribed = True}))
+								True -> (shortDescr, Nothing)
 	where
-		filteredUnequal = filter (\z -> locRoom z /= room)
-		filteredLocations = filter (\x -> locRoom x == room)
-		changedLocation allLocs = case null (filteredLocations allLocs) of
-			True -> []
-			False -> [locationWithoutObject (head . filteredLocations $ allLocs) obj]
-			
-locationsWithoutObjects :: Room -> Locations-> Objects -> Locations
-locationsWithoutObjects room = foldl f'
-	where f' = (\x y -> locationsWithoutObject x room y)
+		longDescr = (locLongDescription loc) ++ describeObjects [] objects
+		shortDescr = (locShortDescription loc) ++ describeObjects [] objects
 	
-addObjectToLocation' :: Location -> Object -> Location
-addObjectToLocation' loc obj = loc {locObjects = obj : (locObjects loc)}
-	
-addObjectToLocation :: Locations -> Room -> Object -> Locations
-addObjectToLocation locs room obj = addObjectToLocation' neededLocation obj : filteredUnequal locs
-	where
-		filteredUnequal = filter (\z -> locRoom z /= room)
-		neededLocation = head $ filter (\x -> locRoom x == room) locs
+----------------------------------------------------------------------
+
+getLocation :: Room -> Locations -> Location
+getLocation room [] = undefined
+getLocation room locs = head $ filter (\x -> locRoom x == room) locs
+
+addObjectToLocation :: Location -> Object -> Location
+addObjectToLocation loc obj = loc {locObjects = obj : (locObjects loc)}
+
+removeObjectFromLocation :: Location -> Object -> Location
+removeObjectFromLocation loc obj = loc {locObjects = [newObj | newObj <- locObjects loc, newObj /= obj]}
+
+removeObjectListFromLocation :: Location -> Objects -> Location
+removeObjectListFromLocation loc os = foldl removeObjectFromLocation loc os
+									
+updateLocations :: Location -> Locations -> Locations
+updateLocations loc locs = loc : [newLoc | newLoc <- locs, (locRoom newLoc) /= (locRoom loc)]

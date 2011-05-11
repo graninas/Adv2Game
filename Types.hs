@@ -32,11 +32,11 @@ data Object = Object {
 } deriving (Eq)
 
 type Objects = [Object]
-type InventoryObjects = Objects
+type Inventory = Objects
 type Directions = [Direction]
 
 data Path = Path {
-    pathDir :: Direction,
+    pathDirection :: Direction,
     pathRoom :: Room
 } deriving (Eq, Show)
 
@@ -45,18 +45,18 @@ type Paths = [Path]
 data Location = Location {
 	locRoom :: Room,
 	locPaths :: Paths,
-	locShortDesc :: String,
-	locLongDesc :: String,
-	locObjects :: Objects
+	locShortDescription :: String,
+	locLongDescription :: String,
+	locObjects :: Objects,
+	locLongDescribed :: Bool
 } deriving (Eq)
 
 type Locations = [Location]
 	
 data GameState = GameState {
 	gsLocations :: Locations,
-	gsCurrentRoom :: Room,
-	gsRoomLongDescribed :: LongDescribedRooms, -- ≈сли длинное описание уже выводилось, то второй раз оно не будет выводитьс€. “олько по команде Look. ¬ списке gsRoomLongDescribed содержатс€ уже описанные комнаты.
-	gsInvObjects :: InventoryObjects
+	gsCurrentLocation :: Location,
+	gsInventory :: Inventory
 }
 
 newtype GS a = GS {

@@ -8,6 +8,16 @@ import Objects
 import Text.Printf(printf)
 import Char(isDigit, digitToInt)
 
+initGameState :: GameState
+initGameState = GameState {
+	gsLocations = [location SouthRoom, location NorthRoom],
+	gsCurrentLocation = location SouthRoom,
+	gsInventory = []
+}
+
+updateGsLocations :: Location -> GameState -> Locations
+updateGsLocations newLoc curGS = updateLocations newLoc (gsLocations curGS)
+
 tryInvestigateItem :: ItemName -> Objects -> GameAction
 tryInvestigateItem itmName fromObjects = let matched = matchedObjects itmName fromObjects in
 									case matched of
@@ -16,16 +26,17 @@ tryInvestigateItem itmName fromObjects = let matched = matchedObjects itmName fr
 										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
 walkTo :: Room -> GameState -> (String, GameState)
-walkTo room curGS = (locDescription, curGS {gsCurrentRoom = room,
-											gsRoomLongDescribed = newLongDescribedRooms})
+walkTo room curGS = (str, curGS {gsCurrentLocation = locWalkTo, gsLocations = updatedLocs})
 		where
-			newLongDescribedRooms = if roomAlreadyLongDescribed then roomsDescribedEarlier else room : roomsDescribedEarlier
-			roomAlreadyLongDescribed = isRoomLongDescribed roomsDescribedEarlier room
-			roomsDescribedEarlier = gsRoomLongDescribed curGS
-			locDescription = describeLocation roomAlreadyLongDescribed room (locationObjects (gsLocations curGS) room)
+			locWalkTo = getLocation room (gsLocations curGS)
+			(str, maybeNewLoc) = describeLocation locWalkTo (locObjects locWalkTo)
+			updatedLocs = case maybeNewLoc of
+						Just updatedLoc -> updateGsLocations updatedLoc curGS
+						Nothing -> (gsLocations curGS)
+			
 
 canWalk :: GameState -> Direction -> Maybe Room
-canWalk = roomOnDirection . locPaths . location . gsCurrentRoom
+canWalk = roomOnDirection . locPaths . gsCurrentLocation
 
 tryWalk :: Direction -> GameState -> GameAction
 tryWalk dir curGS = case canWalk curGS dir of
@@ -39,35 +50,33 @@ tryTake str objects curGS = case parseObject str objects of
 							(Nothing, str) -> PrintMessage str
 							
 							
-tryPickup' :: Object -> GameState -> Maybe GameState
-tryPickup' obj curGS = let
-						locs = gsLocations curGS
-						room = gsCurrentRoom curGS
-						inv = gsInvObjects curGS in
-					case isPickupable obj of
-						True -> Just curGS {gsLocations = (locationsWithoutObject locs room obj), gsInvObjects = obj : inv}
+tryPickup' :: Object -> Location -> Inventory -> Maybe (Location, Inventory)
+tryPickup' obj loc inv = case isPickupable obj of
+						True -> Just (removeObjectFromLocation loc obj, obj : inv)
 						False -> Nothing
-		
 
 tryPickup :: ItemName -> Objects -> GameState -> GameAction
 tryPickup itmName fromObjects curGS = let matched = matchedObjects itmName fromObjects in
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
-										(x:[]) -> case tryPickup' x curGS of
-												Just newState -> SaveState newState (successPickupingObjectMsg x)
+										(x:[]) -> case tryPickup' x (gsCurrentLocation curGS) (gsInventory curGS) of
+												Just (newLoc, newInv) -> SaveState curGS {gsCurrentLocation = newLoc, gsLocations = updateGsLocations newLoc curGS, gsInventory = newInv} (successPickupingObjectMsg x)
 												Nothing -> PrintMessage (failurePickupingObjectMsg x)
 										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
 
 applyWeld :: Object -> Object -> Object -> GameState -> GameState
-applyWeld o1 o2 weldedO curGS = case tryPickup' weldedO curGS of
-									Just newState -> newState {gsLocations = locsWithoutObjects}
-									Nothing -> curGS {gsLocations = locsPlusWeldedObject}
+applyWeld o1 o2 weldedO curGS = curGS {gsLocations = newLocations, gsInventory = newInventory}
 	where
-		locs = gsLocations curGS
-		room = gsCurrentRoom curGS
-		inv = gsInvObjects curGS
-		locsWithoutObjects = locationsWithoutObjects room locs [o1,o2]
-		locsPlusWeldedObject = addObjectToLocation locsWithoutObjects (gsCurrentRoom curGS) weldedO
+		curLoc = gsCurrentLocation curGS
+		inv = gsInventory curGS
+		clearedLocation = removeObjectListFromLocation curLoc [o1, o2]
+		pickupTrying = tryPickup' weldedO curLoc inv
+		newLocations = case pickupTrying of
+				Just (newLoc, newInv) -> updateGsLocations clearedLocation curGS
+				Nothing -> updateGsLocations (addObjectToLocation clearedLocation weldedO) curGS
+		newInventory = case pickupTrying of
+				Just (_, newInv) -> newInv
+				Nothing -> inv
 
 tryWeld :: ItemName -> ItemName -> Objects -> GameState -> GameAction
 tryWeld itmName1 itmName2 fromObjects curGS =

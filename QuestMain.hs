@@ -49,9 +49,9 @@ parseCommand str = let
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do
-		let currentRoom = gsCurrentRoom curGS
-		let roomObjects = locationObjects (gsLocations curGS) currentRoom
-		let inventory = gsInvObjects curGS
+		let currentLocation = gsCurrentLocation curGS
+		let locationObjects = locObjects currentLocation
+		let inventory = gsInventory curGS
 		case maybeInputCmd of
 			Nothing -> case parseCommand inputStr of
 				(Nothing, []) -> ReadUserInput
@@ -59,13 +59,13 @@ run' inputStr maybeInputCmd curGS = do
 				(Just Quit, _) -> QuitGame "Be seen you..."
 				(Just (Walk dir), _) -> tryWalk dir curGS
 				(Just Inventory, _) -> PrintMessage (showInventory inventory)
-				(Just Look, _) -> PrintMessage (lookAround currentRoom roomObjects)
-				(Just (Investigate itmName), _) -> tryInvestigateItem itmName (roomObjects ++ inventory)
-				(Just (Pickup itmName), _) -> tryPickup itmName roomObjects curGS
-				(Just (Take str), _) ->  tryTake str roomObjects curGS
-				(Just (Inv itmName), _) -> tryInvestigateItem itmName (roomObjects ++ inventory)
+				(Just Look, _) -> PrintMessage (lookAround currentLocation)
+				(Just (Investigate itmName), _) -> tryInvestigateItem itmName (locationObjects ++ inventory)
+				(Just (Pickup itmName), _) -> tryPickup itmName locationObjects curGS
+				(Just (Take str), _) ->  tryTake str locationObjects curGS
+				(Just (Inv itmName), _) -> tryInvestigateItem itmName (locationObjects ++ inventory)
 				(Just Help, _) -> PrintMessage helpMessage
-				(Just (Weld itmName1 itmName2), _) -> tryWeld itmName1 itmName2 (roomObjects ++ inventory) curGS
+				(Just (Weld itmName1 itmName2), _) -> tryWeld itmName1 itmName2 (locationObjects ++ inventory) curGS
 			Just (QualifyPickup objects) -> tryTake inputStr objects curGS
 
 run :: InputString -> Maybe InputCommand -> GS ()
@@ -81,9 +81,6 @@ run inputStr oldInputCmd = do
 
 main :: IO ()
 main = do
-	putStrLn $ lookAround startRoom startRoomObjects
-	x <- evalStateT (runGameState (run "" Nothing)) initWorld
+	putStrLn $ lookAround (gsCurrentLocation initGameState)
+	x <- evalStateT (runGameState (run "" Nothing)) initGameState
 	putStrLn ""
-		where
-			startRoom = gsCurrentRoom $ initWorld
-			startRoomObjects = locObjects . location $ startRoom

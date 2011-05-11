@@ -5,7 +5,7 @@ import Text.Printf(printf)
 
 roomOnDirection :: Paths -> Direction -> Maybe Room
 roomOnDirection [] _ = Nothing
-roomOnDirection (p:ps) dir = if pathDir p == dir then Just . pathRoom $ p else roomOnDirection ps dir
+roomOnDirection (p:ps) dir = if pathDirection p == dir then Just . pathRoom $ p else roomOnDirection ps dir
 
 successWalkingMsg :: Room -> Direction -> String
 successWalkingMsg room dir = printf "You walking %s to %s."  (show dir) (show room)
