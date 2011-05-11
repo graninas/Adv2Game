@@ -68,6 +68,6 @@ removeObjectFromLocation loc obj = loc {locObjects = [newObj | newObj <- locObje
 
 removeObjectListFromLocation :: Location -> Objects -> Location
 removeObjectListFromLocation loc os = foldl removeObjectFromLocation loc os
-									
+
 updateLocations :: Location -> Locations -> Locations
 updateLocations loc locs = loc : [newLoc | newLoc <- locs, (locRoom newLoc) /= (locRoom loc)]

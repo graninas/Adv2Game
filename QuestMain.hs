@@ -81,6 +81,5 @@ run inputStr oldInputCmd = do
 
 main :: IO ()
 main = do
-	putStrLn $ lookAround (gsCurrentLocation initGameState)
-	x <- evalStateT (runGameState (run "" Nothing)) initGameState
+	_ <- evalStateT (runGameState (run "Look" Nothing)) initGameState
 	putStrLn ""
