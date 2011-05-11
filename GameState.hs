@@ -9,8 +9,7 @@ import Text.Printf(printf)
 import Char(isDigit, digitToInt)
 
 tryInvestigateItem :: ItemName -> Objects -> GameAction
-tryInvestigateItem itmName fromObjects = do
-									let matched = matchedObjects itmName fromObjects
+tryInvestigateItem itmName fromObjects = let matched = matchedObjects itmName fromObjects in
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
 										(x:[]) -> PrintMessage (oDescription x)
@@ -40,21 +39,35 @@ tryTake str objects curGS = case parseObject str objects of
 							(Nothing, str) -> PrintMessage str
 							
 							
-pickup :: Object -> GameState -> GameState
-pickup obj curGS = curGS {gsLocations = (locationsWithoutObject locs room obj), gsInvObjects = obj : inv}
-	where
-		locs = gsLocations curGS
-		room = gsCurrentRoom curGS
-		inv = gsInvObjects curGS
+tryPickup' :: Object -> GameState -> Maybe GameState
+tryPickup' obj curGS = let
+						locs = gsLocations curGS
+						room = gsCurrentRoom curGS
+						inv = gsInvObjects curGS in
+					case isPickupable obj of
+						True -> Just curGS {gsLocations = (locationsWithoutObject locs room obj), gsInvObjects = obj : inv}
+						False -> Nothing
+		
 
 tryPickup :: ItemName -> Objects -> GameState -> GameAction
 tryPickup itmName fromObjects curGS = let matched = matchedObjects itmName fromObjects in
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
-										(x:[]) -> case isPickupable x of
-												True -> SaveState (pickup x curGS) (successPickupingObjectMsg x)
-												False -> PrintMessage (failurePickupingObjectMsg x)
+										(x:[]) -> case tryPickup' x curGS of
+												Just newState -> SaveState newState (successPickupingObjectMsg x)
+												Nothing -> PrintMessage (failurePickupingObjectMsg x)
 										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
+
+applyWeld :: Object -> Object -> Object -> GameState -> GameState
+applyWeld o1 o2 weldedO curGS = case tryPickup' weldedO curGS of
+									Just newState -> newState {gsLocations = locsWithoutObjects}
+									Nothing -> curGS {gsLocations = locsPlusWeldedObject}
+	where
+		locs = gsLocations curGS
+		room = gsCurrentRoom curGS
+		inv = gsInvObjects curGS
+		locsWithoutObjects = locationsWithoutObjects room locs [o1,o2]
+		locsPlusWeldedObject = addObjectToLocation locsWithoutObjects (gsCurrentRoom curGS) weldedO
 
 tryWeld :: ItemName -> ItemName -> Objects -> GameState -> GameAction
 tryWeld itmName1 itmName2 fromObjects curGS =
@@ -68,9 +81,7 @@ tryWeld itmName1 itmName2 fromObjects curGS =
 			(x:[]) -> case matched2 of
 					[] -> PrintMessage $ notVisibleObjectError $ itmName2
 					(y:[]) -> case weld x y of
-						(Just obj, str) -> PrintMessage str
+						(Just obj, str) -> SaveState (applyWeld x y obj curGS) str
 						(Nothing, str) ->  PrintMessage str
 					(ys) -> tooMany itmName2 matched2
 			(xs) -> tooMany itmName1 matched1
-
-			

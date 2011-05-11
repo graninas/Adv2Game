@@ -26,7 +26,7 @@ locationLongDesc' room = case room of
 	
 locationObjects' :: Room -> Objects
 locationObjects' room = case room of
-	SouthRoom -> [object homeDrawer, object homePhone, object homeUmbrella1, object homeTable, object homePhone2]
+	SouthRoom -> [object homeDrawer, object homePhone, object homeUmbrella1, object homeTable, object rope, object homeHook]
 	NorthRoom -> [object homeUmbrella2]
 	_ -> []
 
@@ -77,3 +77,16 @@ locationsWithoutObject locs room obj = [res | let cl = (changedLocation locs), l
 		changedLocation allLocs = case null (filteredLocations allLocs) of
 			True -> []
 			False -> [locationWithoutObject (head . filteredLocations $ allLocs) obj]
+			
+locationsWithoutObjects :: Room -> Locations-> Objects -> Locations
+locationsWithoutObjects room = foldl f'
+	where f' = (\x y -> locationsWithoutObject x room y)
+	
+addObjectToLocation' :: Location -> Object -> Location
+addObjectToLocation' loc obj = loc {locObjects = obj : (locObjects loc)}
+	
+addObjectToLocation :: Locations -> Room -> Object -> Locations
+addObjectToLocation locs room obj = addObjectToLocation' neededLocation obj : filteredUnequal locs
+	where
+		filteredUnequal = filter (\z -> locRoom z /= room)
+		neededLocation = head $ filter (\x -> locRoom x == room) locs

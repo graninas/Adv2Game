@@ -14,6 +14,7 @@ objectName' itm
 	| itm == homeUmbrella2 = "Blue Umbrella"
 	| itm == homePhone = "Digital Phone"
 	| itm == homePhone2 = "Broken Phone"
+	| itm == ropeOnHook = "Rope on hook"
 	| otherwise = show . fst $ itm
 
 objectDescription' :: Item -> String
@@ -24,7 +25,7 @@ objectDescription' itm
 	| itm == homePhone2 = "Broken electric phone."
 	| itm == rope = "Good 30 meters rope."
 	| itm == homeHook = "Massive steel hook nailed to wall."
-	| itm == ropeOnHook = "Rope looks tight."
+	| itm == ropeOnHook = "Rope on hook looks tight."
 	| otherwise = printf "There is nothing special about %s." (objectName' itm)
 
 objectPickupFailMessage' :: Item -> String
