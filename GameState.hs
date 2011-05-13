@@ -58,17 +58,22 @@ tryPickup itmName fromObjects curGS = let matched = matchedObjects itmName fromO
 												Nothing -> PrintMessage (failurePickupingObjectMsg x)
 										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
 
-applyWeld :: Object -> Object -> Object -> GameState -> GameState
+-- "Применяет" результат команды Weld. Если новый объект можно взять, он добавляется в Инвентарь, если взять нельзя, остается в локации.
+-- Два других объекта удаляются из локации.
+applyWeld :: Object -> Object -> Object -> GameState -> (String, GameState)
 applyWeld o1 o2 weldedO curGS =
 		let
 			curLoc = gsCurrentLocation curGS
 			inv = gsInventory curGS
 			clearedLoc = removeObjectListFromLocation curLoc [o1, o2]
 			maybeLocAndInv = tryPickup' weldedO clearedLoc inv
-			(updatedLocs, updatedInv, updatedCurLoc) = case maybeLocAndInv of
-				Just (loc, newInv) -> (updateGsLocations clearedLoc curGS, newInv, clearedLoc)
-				Nothing -> (updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
-		in curGS {gsCurrentLocation = updatedCurLoc, gsLocations = updatedLocs, gsInventory = updatedInv}
+			(msg, updatedLocs, updatedInv, updatedCurLoc) = case maybeLocAndInv of
+				Just (loc, newInv) -> ("\n" ++ showObject weldedO ++ " added to your Inventory.",
+										updateGsLocations clearedLoc curGS,
+										newInv,
+										clearedLoc)
+				Nothing -> ("", updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
+		in (msg, curGS {gsCurrentLocation = updatedCurLoc, gsLocations = updatedLocs, gsInventory = updatedInv})
 
 tryWeld :: ItemName -> ItemName -> Objects -> GameState -> GameAction
 tryWeld itmName1 itmName2 fromObjects curGS =
@@ -82,7 +87,9 @@ tryWeld itmName1 itmName2 fromObjects curGS =
 			(x:[]) -> case matched2 of
 					[] -> PrintMessage $ notVisibleObjectError $ itmName2
 					(y:[]) -> case weld x y of
-						(Just obj, str) -> SaveState (applyWeld x y obj curGS) str
+						(Just obj, str) ->
+								let (applyMsg, newGS) = applyWeld x y obj curGS
+								in SaveState newGS (str ++ applyMsg)
 						(Nothing, str) ->  PrintMessage str
 					(ys) -> tooMany itmName2 matched2
 			(xs) -> tooMany itmName1 matched1
