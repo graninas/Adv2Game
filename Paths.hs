@@ -1,11 +1,12 @@
-module Directions where
+module Paths where
 
 import Types
 import Text.Printf(printf)
 
-roomOnDirection :: Paths -> Direction -> Maybe Room
-roomOnDirection [] _ = Nothing
-roomOnDirection (p:ps) dir = if pathDirection p == dir then Just . pathRoom $ p else roomOnDirection ps dir
+getPathOnDirection :: Paths -> Direction -> Maybe Path
+getPathOnDirection ps dir = case filter (\x -> pathDirection x == dir) ps of
+					[] -> Nothing
+					(x:xs) -> Just x
 
 successWalkingMsg :: Room -> Direction -> String
 successWalkingMsg room dir = printf "You walking %s to %s."  (show dir) (show room)

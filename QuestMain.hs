@@ -2,9 +2,9 @@ module Main where
 
 import Types
 import Objects
+import Locations
 import Tools
 import GameState
-import Locations
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
 import Char(isDigit, digitToInt)
@@ -57,7 +57,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Nothing, []) -> ReadUserInput
 				(Nothing, str) -> PrintMessage str
 				(Just Quit, _) -> QuitGame "Be seen you..."
-				(Just (Walk dir), _) -> tryWalk dir curGS
+				(Just (Walk dir), _) -> tryWalk currentLocation dir curGS
 				(Just Inventory, _) -> PrintMessage (showInventory inventory)
 				(Just Look, _) -> PrintMessage (lookAround currentLocation)
 				(Just (Investigate itmName), _) -> tryInvestigateItem itmName (locationObjects ++ inventory)

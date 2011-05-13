@@ -2,7 +2,7 @@ module GameState where
 
 import Types
 import Locations
-import Directions
+import Paths
 import Objects
 
 import Text.Printf(printf)
@@ -25,24 +25,18 @@ tryInvestigateItem itmName fromObjects = let matched = matchedObjects itmName fr
 										(x:[]) -> PrintMessage (oDescription x)
 										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
-walkTo :: Room -> GameState -> (String, GameState)
-walkTo room curGS = (str, curGS {gsCurrentLocation = locWalkTo, gsLocations = updatedLocs})
-		where
-			locWalkTo = getLocation room (gsLocations curGS)
-			(str, maybeNewLoc) = describeLocation locWalkTo (locObjects locWalkTo)
-			updatedLocs = case maybeNewLoc of
-						Just updatedLoc -> updateGsLocations updatedLoc curGS
-						Nothing -> (gsLocations curGS)
-			
+tryWalk' :: Location -> Direction -> Locations -> Maybe Location
+tryWalk' fromLoc toDir locs = getPathOnDirection (locPaths fromLoc) toDir >>=  \x -> getLocation (pathRoom x) locs
 
-canWalk :: GameState -> Direction -> Maybe Room
-canWalk = roomOnDirection . locPaths . gsCurrentLocation
-
-tryWalk :: Direction -> GameState -> GameAction
-tryWalk dir curGS = case canWalk curGS dir of
-						Nothing -> PrintMessage (failureWalkingMsg dir)
-						Just room -> SaveState newGS (successWalkingMsg room dir ++ "\n" ++ newLocDescr)
-							where (newLocDescr, newGS) = walkTo room curGS
+tryWalk :: Location -> Direction -> GameState -> GameAction
+tryWalk fromLoc toDir curGS = case tryWalk' fromLoc toDir (gsLocations curGS) of
+						Nothing -> PrintMessage (failureWalkingMsg toDir)
+						Just walkedLoc -> SaveState newGS (successWalkingMsg (locRoom walkedLoc) toDir ++ "\n" ++ newLocDescr)
+							where
+								(newLocDescr, maybeUpdatedLoc) = describeLocation walkedLoc (locObjects walkedLoc)
+								newGS = curGS {gsCurrentLocation = newLoc, gsLocations = updatedLocs}
+								newLoc = walkedLoc {locLongDescribed = True}
+								updatedLocs = updateGsLocations newLoc curGS
 
 tryTake :: String -> Objects -> GameState -> GameAction
 tryTake str objects curGS = case parseObject str objects of

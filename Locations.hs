@@ -56,9 +56,10 @@ describeLocation loc objects = case locLongDescribed loc of
 	
 ----------------------------------------------------------------------
 
-getLocation :: Room -> Locations -> Location
-getLocation room [] = undefined
-getLocation room locs = head $ filter (\x -> locRoom x == room) locs
+getLocation :: Room -> Locations -> Maybe Location
+getLocation room locs = case filter (\x -> locRoom x == room) locs of
+					[] -> Nothing
+					(x:xs) -> Just x
 
 addObjectToLocation :: Location -> Object -> Location
 addObjectToLocation loc obj = loc {locObjects = obj : (locObjects loc)}
