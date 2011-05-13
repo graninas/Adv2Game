@@ -8,6 +8,7 @@ import GameState
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
 import Char(isDigit, digitToInt)
+import qualified System.IO.Error as SysIOError
 
 helpMessage :: String
 helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
@@ -81,5 +82,7 @@ run inputStr oldInputCmd = do
 
 main :: IO ()
 main = do
+	savedDataStr <- catch (readFile "save.a2g") (\e -> if SysIOError.isDoesNotExistError e then return ("No save.a2g file. Starting new game...\n") else ioError e)
+	putStrLn savedDataStr
 	_ <- evalStateT (runGameState (run "Look" Nothing)) initGameState
 	putStrLn ""
