@@ -59,18 +59,16 @@ tryPickup itmName fromObjects curGS = let matched = matchedObjects itmName fromO
 										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
 
 applyWeld :: Object -> Object -> Object -> GameState -> GameState
-applyWeld o1 o2 weldedO curGS = curGS {gsLocations = newLocations, gsInventory = newInventory}
-	where
-		curLoc = gsCurrentLocation curGS
-		inv = gsInventory curGS
-		clearedLocation = removeObjectListFromLocation curLoc [o1, o2]
-		pickupTrying = tryPickup' weldedO curLoc inv
-		newLocations = case pickupTrying of
-				Just (newLoc, newInv) -> updateGsLocations clearedLocation curGS
-				Nothing -> updateGsLocations (addObjectToLocation clearedLocation weldedO) curGS
-		newInventory = case pickupTrying of
-				Just (_, newInv) -> newInv
-				Nothing -> inv
+applyWeld o1 o2 weldedO curGS =
+		let
+			curLoc = gsCurrentLocation curGS
+			inv = gsInventory curGS
+			clearedLoc = removeObjectListFromLocation curLoc [o1, o2]
+			maybeLocAndInv = tryPickup' weldedO clearedLoc inv
+			(updatedLocs, updatedInv, updatedCurLoc) = case maybeLocAndInv of
+				Just (loc, newInv) -> (updateGsLocations clearedLoc curGS, newInv, clearedLoc)
+				Nothing -> (updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
+		in curGS {gsCurrentLocation = updatedCurLoc, gsLocations = updatedLocs, gsInventory = updatedInv}
 
 tryWeld :: ItemName -> ItemName -> Objects -> GameState -> GameAction
 tryWeld itmName1 itmName2 fromObjects curGS =
