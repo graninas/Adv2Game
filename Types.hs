@@ -5,7 +5,7 @@ import Control.Monad (mapM_)
 import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..))
 							
 data Room = SouthRoom | NorthRoom | Corridor | NoRoom
-	deriving (Show, Eq)
+	deriving (Eq, Show, Read)
 
 type Rooms = [Room]
 type LongDescribedRooms = Rooms
@@ -29,35 +29,35 @@ data Object = Object {
 	oName :: String,
 	oDescription :: String,
 	oPickupFailMsg :: String
-} deriving (Eq)
+} deriving (Eq, Show, Read)
 
 type Objects = [Object]
-type InventoryObjects = Objects
+type Inventory = Objects
 type Directions = [Direction]
 
 data Path = Path {
-    pathDir :: Direction,
+    pathDirection :: Direction,
     pathRoom :: Room
-} deriving (Eq, Show)
+} deriving (Eq, Show, Read)
 
 type Paths = [Path]
 
 data Location = Location {
 	locRoom :: Room,
 	locPaths :: Paths,
-	locShortDesc :: String,
-	locLongDesc :: String,
-	locObjects :: Objects
-} deriving (Eq)
+	locShortDescription :: String,
+	locLongDescription :: String,
+	locObjects :: Objects,
+	locLongDescribed :: Bool
+} deriving (Eq, Show, Read)
 
 type Locations = [Location]
 	
 data GameState = GameState {
 	gsLocations :: Locations,
-	gsCurrentRoom :: Room,
-	gsRoomLongDescribed :: LongDescribedRooms, -- ≈сли длинное описание уже выводилось, то второй раз оно не будет выводитьс€. “олько по команде Look. ¬ списке gsRoomLongDescribed содержатс€ уже описанные комнаты.
-	gsInvObjects :: InventoryObjects
-}
+	gsCurrentLocation :: Location,
+	gsInventory :: Inventory
+} deriving (Show, Read)
 
 newtype GS a = GS {
 	runGameState :: StateT GameState IO a

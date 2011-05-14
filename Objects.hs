@@ -81,10 +81,6 @@ showObject = oName
 notVisibleObjectError :: ItemName -> String
 notVisibleObjectError itmNm = printf "You don't see any %s here." (show itmNm)
 
-locationObjects :: Locations -> Room -> Objects
-locationObjects [] _ = []
-locationObjects (x:xs) room = if room == locRoom x then locObjects x else locationObjects xs room
-
 successPickupingObjectMsg :: Object -> String
 successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
 
@@ -124,7 +120,7 @@ describeObjects str = showObjects ([], str) standartObjectShowingF standartBound
 investigateObjects :: IntroString -> Objects -> String
 investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (oDescription x)), \_ -> 0, 0) ["","",""]
 
-showInventory :: InventoryObjects -> String
+showInventory :: Inventory -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
 
 enumerateObjects :: IntroString -> Objects -> String
