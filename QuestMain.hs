@@ -10,6 +10,9 @@ import Control.Monad.State (get, gets, StateT(..), evalStateT,
 import Char(isDigit, digitToInt)
 import qualified System.IO.Error as SysIOError
 
+saveGame :: GameState -> GS ()
+saveGame curGS = liftIO $(writeFile "save.a2g" (show curGS))
+
 helpMessage :: String
 helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"Author: Granin A. S.",
@@ -78,11 +81,20 @@ run inputStr oldInputCmd = do
 		PrintMessage outMsg -> ioOutMsgGS outMsg >> run "" Nothing
 		ReadUserInput -> ioInMsgGS >>= \x -> run x Nothing
 		ReadMessagedUserInput inOutString newInputCmd -> ioOutMsgGS inOutString >> ioInMsgGS >>= \x -> run x (Just newInputCmd)
-		SaveState newState outMsg -> ioOutMsgGS outMsg >> put newState >> run "" Nothing
+		SaveState newState outMsg -> ioOutMsgGS outMsg >> put newState >> return newState >>= saveGame >> run "" Nothing
 
+loadGame str = case reads str of
+				[(x,"")] -> Just x
+				_ -> Nothing
+		
 main :: IO ()
 main = do
-	savedDataStr <- catch (readFile "save.a2g") (\e -> if SysIOError.isDoesNotExistError e then return ("No save.a2g file. Starting new game...\n") else ioError e)
-	putStrLn savedDataStr
-	_ <- evalStateT (runGameState (run "Look" Nothing)) initGameState
+	str <- catch (readFile "save.a2g") (\_ -> return [])
+	(startGameState, msg) <- case str of
+			[] -> return (initGameState, "Starting new game...\n")
+			_ -> case loadGame str of
+				Just gs -> return (gs, "Restoring previous game...\n")
+				Nothing -> return (initGameState, "Starting new game...\n")
+	putStrLn msg
+	_ <- evalStateT (runGameState (run "Look" Nothing)) startGameState
 	putStrLn ""
