@@ -1,7 +1,6 @@
 module Locations where
 
 import Types
-import Items
 import Objects
 
 --- Data functions ---

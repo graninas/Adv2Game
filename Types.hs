@@ -19,17 +19,14 @@ data ItemName =
 			| Drawer
 			| Umbrella
 			| Rope
+			| TiedRope
 			| Hook
 	deriving (Show, Eq, Read)
-	
-type Item = (ItemName, Integer)
-type ObjectName = String
+
+type ObjectID = (String, ItemName)
 
 data Object = Object {
-	oItem :: Item,
-	oName :: ObjectName,
-	oDescription :: String,
-	oPickupFailMsg :: String
+	objectID :: ObjectID
 } deriving (Eq, Show, Read)
 
 type Objects = [Object]
@@ -72,10 +69,10 @@ data Command =
 			| Inv ItemName 			-- short version of Investigate
 			| Inventory
 			| Pickup ItemName		-- pickups if itemName parsed
-			| Take ObjectName		-- tries pickup object by string
+			| Take String			-- tries pickup object by string
 			| Weld ItemName ItemName
 			| Open ItemName
-			| OpenO ObjectName
+			| OpenO String
 			| Quit
 			| Help
 			| NoCommand

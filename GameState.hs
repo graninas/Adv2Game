@@ -22,7 +22,7 @@ tryInvestigateItem :: ItemName -> Objects -> GameAction
 tryInvestigateItem itmName fromObjects = let matched = matchedObjects itmName fromObjects in
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itmName)
-										(x:[]) -> PrintMessage (oDescription x)
+										(x:[]) -> PrintMessage (investigateObjects [] [x])
 										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
 tryWalk' :: Location -> Direction -> Locations -> Maybe Location
@@ -40,7 +40,7 @@ tryWalk fromLoc toDir curGS = case tryWalk' fromLoc toDir (gsLocations curGS) of
 
 tryTake :: String -> Objects -> GameState -> GameAction
 tryTake str objects curGS = case parseObject str objects of
-							(Just obj, _) -> tryPickup (fst $ oItem $ obj) [obj] curGS
+							(Just obj, _) -> tryPickup (snd . objectID $ obj) [obj] curGS
 							(Nothing, str) -> PrintMessage str
 							
 							

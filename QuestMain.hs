@@ -50,7 +50,7 @@ parseCommand str =
 						case reads capStrings of
 							[(x,"")] -> (Just x, [])
 							_ -> case head capedWords of
-								"Take" -> (Just (Take wordsAfterCommand), [])	-- Данный пункт нужен потому, что при reads capStrings эта команда не будет распознана из-за аргумента ObjectName у конструктора.
+								"Take" -> (Just (Take wordsAfterCommand), [])	-- Данный пункт нужен потому, что при reads capStrings эта команда не будет распознана из-за аргумента ObjectID у конструктора.
 							--	"G" -> caseCmdTail "Go where?" (\lCmdMain -> Walk lCmdMain) (\_ -> NoCommand) cmdTail wordsAfterCommand
 								"Q" -> (Just Quit, "Be seen you...")
 								"I" -> (Just Inventory, [])
