@@ -31,12 +31,17 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"For example: 'Phone' is object's simple name.",
 	"Input is case insensitive."]
 
+-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию. С помощью lambda!
+-- Функция принимает короткую команду и пытается найти после этой команды объекты.
+-- Допускает два конструктора над короткой командой: главный (cmdMain) и альтернативный (cmdAlt).
+-- Альтернативные конструкторы команд (оканчиваются на S) указывают, что объекты будут распознаны в строке где-то в другом месте.
+-- Если передана только короткая команда, выдает сообщение (doWhatMsg).
 
-caseCmdTail :: String -> (a -> Command) -> (String -> Command) -> (String, [(a, String)]) -> String -> (Maybe (Command), String)
-caseCmdTail doWhatMsg cmdMain cmdAlt cmdTail wordsAfterCommand = case cmdTail of
-			([], _) -> (Nothing, doWhatMsg)
+caseCmdTail :: String -> (a -> Command) -> (String -> Command) -> (String, [(a, String)]) -> (Maybe (Command), String)
+caseCmdTail doWhatMsg cmdMain cmdAlt cmdTail = case cmdTail of
 			(_, [(y, "")]) -> (Just (cmdMain y), [])
-			(_, _) -> (Just (cmdAlt wordsAfterCommand), [])
+			(wordsAfterCommand, []) -> (Just (cmdAlt wordsAfterCommand), [])
+			([], _) -> (Nothing, doWhatMsg)
 	
 parseCommand :: String -> (Maybe Command, String)
 parseCommand [] = (Nothing, [])
@@ -53,7 +58,8 @@ parseCommand str =
 							"Q" -> (Just Quit, "Be seen you...")
 							"I" -> (Just Inventory, [])
 							"H" -> (Just Help, [])
-							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> TakeS lCmdAlt) cmdTail wordsAfterCommand-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
+							"E" -> caseCmdTail "Examine what?" (\lCmdMain -> Examine lCmdMain) (\lCmdAlt -> ExamineS lCmdAlt) cmdTail
+							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> TakeS lCmdAlt) cmdTail
 							_ -> (Nothing, "Can't understand a command.")
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction

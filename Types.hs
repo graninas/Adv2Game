@@ -63,6 +63,7 @@ data Command =
 			Walk Direction
 			| Look
 			| Examine Item
+			| ExamineS String
 			| Inventory
 			| Take Item
 			| TakeS String
