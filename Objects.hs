@@ -9,40 +9,36 @@ import Text.Printf(printf)
 
 homePhone = ("Digital Phone", Phone)
 homePhone2 = ("Broken Phone", Phone)
-homeTable = ("", Table)
+homeTable = ("Table", Table)
 homeUmbrella1 = ("Red Umbrella", Umbrella)
 homeUmbrella2 = ("Blue Umbrella", Umbrella)
-homeDrawer = ("", Drawer)
-rope = ("", Rope)
-homeHook = ("", Hook)
-ropeOnHook = ("Rope on hook", TiedRope)
+homeDrawer = ("Drawer", Drawer)
+rope = ("Rope", Rope)
+homeHook = ("Hook", Hook)
+ropeOnHook = ("Rope on hook", Combined Rope Hook)
 
-objectName' :: ObjectID -> String
-objectName' ([], itmName) = show itmName
-objectName' (n, _) = n
+objectDescription' :: ObjectName -> String
+objectDescription' objName
+	| objName == fst homeUmbrella1 = "Nice red mechanic Umbrella."
+	| objName == fst homeUmbrella2 = "Nice blue Umbrella."
+	| objName == fst homePhone = "The Phone has some voice messages for you."
+	| objName == fst homePhone2 = "Broken electric phone."
+	| objName == fst rope = "Good 30 meters rope."
+	| objName == fst homeHook = "Massive steel hook nailed to wall."
+	| objName == fst ropeOnHook = "Rope on hook looks tight."
+	| otherwise = printf "There is nothing special about %s." objName
 
-objectDescription' :: ObjectID -> String
-objectDescription' objID
-	| objID == homeUmbrella1 = "Nice red mechanic Umbrella."
-	| objID == homeUmbrella2 = "Nice blue Umbrella."
-	| objID == homePhone = "The Phone has some voice messages for you."
-	| objID == homePhone2 = "Broken electric phone."
-	| objID == rope = "Good 30 meters rope."
-	| objID == homeHook = "Massive steel hook nailed to wall."
-	| objID == ropeOnHook = "Rope on hook looks tight."
-	| otherwise = printf "There is nothing special about %s." (objectName' objID)
-
-objectPickupFailMessage' :: ObjectID -> String
-objectPickupFailMessage' objID
-	| objID == homePhone = "Phone drawes a wires and strikes against the table!"
-	| otherwise = printf "You can't take a %s." (objectName' objID)
+objectPickupFailMessage' :: ObjectName -> String
+objectPickupFailMessage' objName
+	| objName == fst homePhone = "Phone drawes a wires and strikes against the table!"
+	| otherwise = printf "You can't take a %s." objName
 
 isPickupable :: Object -> Bool
-isPickupable obj = (objectID obj) `elem` [homeUmbrella1, rope]
+isPickupable obj = (objectName obj, objectItem obj) `elem` [homeUmbrella1, rope]
 
 weld :: Object -> Object -> (Maybe Object, String)
 weld o1 o2
-	| objectID o1 == rope && objectID o2 == homeHook = (Just $ object ropeOnHook, "You successfully tied rope to the hook.")
+	| objectName o1 == fst rope && objectName o2 == fst homeHook = (Just $ object ropeOnHook, "You successfully tied rope to the hook.")
 	| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject o1) (showObject o2))
 
 ----------------------
@@ -53,7 +49,7 @@ readObject _ [] = []
 readObject s objects = filter (\x -> (capitalizedOName x) == capitalizedS) objects
 	where
 		capitalizedS = capitalize s
-		capitalizedOName = capitalize . fst . objectID
+		capitalizedOName = capitalize . objectName
 
 parseObject :: String -> Objects -> (Maybe Object, String)
 parseObject _ [] = (Nothing, "No objects to match.")
@@ -72,20 +68,20 @@ type IntroString = String
 type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
 type ShowObjectsBoundStrings = [String]
 
-object :: ObjectID -> Object
-object objID = Object {objectID = objID}
+object :: ObjectIdentifier -> Object
+object objID = Object {objectItem = snd objID, objectName = fst objID}
 
 showObject :: Object -> String
-showObject = objectName' . objectID
+showObject = objectName
 
-notVisibleObjectError :: ItemName -> String
-notVisibleObjectError itmNm = printf "You don't see any %s here." (show itmNm)
+notVisibleObjectError :: Item -> String
+notVisibleObjectError item = printf "You don't see any %s here." (show item)
 
 successPickupingObjectMsg :: Object -> String
 successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
 
 failurePickupingObjectMsg :: Object -> String
-failurePickupingObjectMsg = objectPickupFailMessage' . objectID
+failurePickupingObjectMsg = objectPickupFailMessage' . objectName
 
 showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
 showObjects pref _          _         [] = fst pref
@@ -118,7 +114,7 @@ describeObjects [] = showObjects ([], "\nThere are some objects here: ") standar
 describeObjects str = showObjects ([], str) standartObjectShowingF standartBoundStrs
 
 investigateObjects :: IntroString -> Objects -> String
-investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (objectDescription'. objectID $ x)), \_ -> 0, 0) ["","",""]
+investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (objectDescription'. objectName $ x)), \_ -> 0, 0) ["","",""]
 
 showInventory :: Inventory -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
@@ -126,7 +122,7 @@ showInventory = showObjects ("No objects in your inventory.", "You have: ") stan
 enumerateObjects :: IntroString -> Objects -> String
 enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: %s" n (showObject x)), \y -> y + 1, 0) ["","",""]
 
-matchedObjects :: ItemName -> Objects -> Objects
+matchedObjects :: Item -> Objects -> Objects
 matchedObjects _ [] = []
-matchedObjects itmName objects = filter (\x -> (snd . objectID $ x) == itmName) objects
+matchedObjects itm objects = filter (\x -> (objectItem x) == itm) objects
 

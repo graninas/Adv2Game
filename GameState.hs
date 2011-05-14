@@ -18,10 +18,10 @@ initGameState = GameState {
 updateGsLocations :: Location -> GameState -> Locations
 updateGsLocations newLoc curGS = updateLocations newLoc (gsLocations curGS)
 
-tryInvestigateItem :: ItemName -> Objects -> GameAction
-tryInvestigateItem itmName fromObjects = let matched = matchedObjects itmName fromObjects in
+tryExamineItem :: Item -> Objects -> GameAction
+tryExamineItem itm fromObjects = let matched = matchedObjects itm fromObjects in
 									case matched of
-										[] -> PrintMessage (notVisibleObjectError itmName)
+										[] -> PrintMessage (notVisibleObjectError itm)
 										(x:[]) -> PrintMessage (investigateObjects [] [x])
 										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
@@ -38,24 +38,30 @@ tryWalk fromLoc toDir curGS = case tryWalk' fromLoc toDir (gsLocations curGS) of
 								newLoc = walkedLoc {locLongDescribed = True}
 								updatedLocs = updateGsLocations newLoc curGS
 
-tryTake :: String -> Objects -> GameState -> GameAction
-tryTake str objects curGS = case parseObject str objects of
-							(Just obj, _) -> tryPickup (snd . objectID $ obj) [obj] curGS
-							(Nothing, str) -> PrintMessage str
-							
-							
-tryPickup' :: Object -> Location -> Inventory -> Maybe (Location, Inventory)
-tryPickup' obj loc inv = case isPickupable obj of
-						True -> Just (removeObjectFromLocation loc obj, obj : inv)
-						False -> Nothing
 
-tryPickup :: ItemName -> Objects -> GameState -> GameAction
-tryPickup itmName fromObjects curGS = let matched = matchedObjects itmName fromObjects in
+tryTakeS :: String -> Objects -> GameState -> GameAction
+tryTakeS str objects curGS = case parseObject str objects of
+							(Just obj, _) -> tryTake' obj curGS
+							(Nothing, str) -> PrintMessage str
+
+pickup :: Object -> Location -> Inventory -> (Maybe (Location, Inventory), String)
+pickup obj loc inv = case isPickupable obj of
+						True -> (Just (removeObjectFromLocation loc obj, obj : inv), successPickupingObjectMsg obj)
+						False -> (Nothing, failurePickupingObjectMsg obj)
+
+tryTake' :: Object -> GameState -> GameAction
+tryTake' obj curGS = let
+						loc = gsCurrentLocation curGS
+						inv = gsInventory curGS
+					in case pickup obj loc inv of
+						(Just (newLoc, newInv), msg) -> SaveState curGS {gsCurrentLocation = newLoc, gsLocations = updateGsLocations newLoc curGS, gsInventory = newInv} msg
+						(Nothing, msg) -> PrintMessage msg
+
+tryTake :: Item -> Objects -> GameState -> GameAction
+tryTake itm fromObjects curGS = let matched = matchedObjects itm fromObjects in
 									case matched of
-										[] -> PrintMessage (notVisibleObjectError itmName)
-										(x:[]) -> case tryPickup' x (gsCurrentLocation curGS) (gsInventory curGS) of
-												Just (newLoc, newInv) -> SaveState curGS {gsCurrentLocation = newLoc, gsLocations = updateGsLocations newLoc curGS, gsInventory = newInv} (successPickupingObjectMsg x)
-												Nothing -> PrintMessage (failurePickupingObjectMsg x)
+										[] -> PrintMessage (notVisibleObjectError itm)
+										(x:[]) -> tryTake' x curGS
 										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
 
 -- "Применяет" результат команды Weld. Если новый объект можно взять, он добавляется в Инвентарь, если взять нельзя, остается в локации.
@@ -66,30 +72,30 @@ applyWeld o1 o2 weldedO curGS =
 			curLoc = gsCurrentLocation curGS
 			inv = gsInventory curGS
 			clearedLoc = removeObjectListFromLocation curLoc [o1, o2]
-			maybeLocAndInv = tryPickup' weldedO clearedLoc inv
+			maybeLocAndInv = pickup weldedO clearedLoc inv
 			(msg, updatedLocs, updatedInv, updatedCurLoc) = case maybeLocAndInv of
-				Just (loc, newInv) -> ("\n" ++ showObject weldedO ++ " added to your Inventory.",
+				(Just (loc, newInv), _) -> ("\n" ++ showObject weldedO ++ " added to your Inventory.",
 										updateGsLocations clearedLoc curGS,
 										newInv,
 										clearedLoc)
-				Nothing -> ("", updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
+				(Nothing, _) -> ("", updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
 		in (msg, curGS {gsCurrentLocation = updatedCurLoc, gsLocations = updatedLocs, gsInventory = updatedInv})
 
-tryWeld :: ItemName -> ItemName -> Objects -> GameState -> GameAction
-tryWeld itmName1 itmName2 fromObjects curGS =
+tryWeld :: Item -> Item -> Objects -> GameState -> GameAction
+tryWeld item1 item2 fromObjects curGS =
 		let
-			matched1 = matchedObjects itmName1 fromObjects
-			matched2 = matchedObjects itmName2 fromObjects
+			matched1 = matchedObjects item1 fromObjects
+			matched2 = matchedObjects item2 fromObjects
 			tooMany i os = PrintMessage (describeObjects (printf "Too many matches of %s: " (show i)) os)
 		in
 		case matched1 of
-			[] -> PrintMessage $ notVisibleObjectError $ itmName1
+			[] -> PrintMessage $ notVisibleObjectError $ item1
 			(x:[]) -> case matched2 of
-					[] -> PrintMessage $ notVisibleObjectError $ itmName2
+					[] -> PrintMessage $ notVisibleObjectError $ item2
 					(y:[]) -> case weld x y of
 						(Just obj, str) ->
 								let (applyMsg, newGS) = applyWeld x y obj curGS
 								in SaveState newGS (str ++ applyMsg)
 						(Nothing, str) ->  PrintMessage str
-					(ys) -> tooMany itmName2 matched2
-			(xs) -> tooMany itmName1 matched1
+					(ys) -> tooMany item2 matched2
+			(xs) -> tooMany item1 matched1

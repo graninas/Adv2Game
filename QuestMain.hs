@@ -21,13 +21,13 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"Game commands:",
 	"Walk <Direction>",
 	"Look",
-	"Investigate <ItemName> or Inv <ItemName>",
+	"Investigate <ObjectName> or Inv <ObjectName>",
 	"Inventory or I",
-	"Pickup <ItemName> or P <ItemName>",
+	"Pickup <ObjectName> or P <ObjectName>",
 	"Take <Object>",
 	"Quit or Q",
 	"Help or H",
-	"", "Here <Object> is full name of object and <ItemName> is it's simple name.",
+	"", "Here <Object> is full name of object and <ObjectName> is it's simple name.",
 	"For example: 'Broken Phone' - object full name and 'Phone' is it's simple name.",
 	"Input is case insensitive."]
 
@@ -38,26 +38,23 @@ caseCmdTail doWhatMsg cmdMain cmdAlt cmdTail wordsAfterCommand = case cmdTail of
 			(_, [(y, "")]) -> (Just (cmdMain y), [])
 			(_, _) -> (Just (cmdAlt wordsAfterCommand), [])
 	
-parseCommand :: String -> ParseResult
+parseCommand :: String -> (Maybe Command, String)
 parseCommand [] = (Nothing, [])
 parseCommand str =
 				let
 					capStrings = capitalize $ str
 					capedWords = words capStrings
 					wordsAfterCommand = unwords . tail $ capedWords
-					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
+--					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
 				in
-						case reads capStrings of
-							[(x,"")] -> (Just x, [])
-							_ -> case head capedWords of
-								"Take" -> (Just (Take wordsAfterCommand), [])	-- Данный пункт нужен потому, что при reads capStrings эта команда не будет распознана из-за аргумента ObjectID у конструктора.
-							--	"G" -> caseCmdTail "Go where?" (\lCmdMain -> Walk lCmdMain) (\_ -> NoCommand) cmdTail wordsAfterCommand
-								"Q" -> (Just Quit, "Be seen you...")
-								"I" -> (Just Inventory, [])
-								"H" -> (Just Help, [])
-								"O" -> caseCmdTail "Open what?" (\lCmdMain -> Open lCmdMain) (\lCmdAlt -> OpenO lCmdAlt) cmdTail wordsAfterCommand
-								"P" -> caseCmdTail "Pickup what?" (\lCmdMain -> Pickup lCmdMain) (\lCmdAlt -> Take lCmdAlt) cmdTail wordsAfterCommand-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
-								_ -> (Nothing, "Can't understand a command.")
+					case reads capStrings of
+						[(x,[])] -> (Just x, [])		-- 1 вариант, полностью распознанная команда, в остатке нет ничего.
+						_ -> case head capedWords of	-- Короткие и строковые команды
+							"Q" -> (Just Quit, "Be seen you...")
+							"I" -> (Just Inventory, [])
+							"H" -> (Just Help, [])
+--							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> Take lCmdAlt) cmdTail wordsAfterCommand-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
+							_ -> (Nothing, "Can't understand a command.")
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do
@@ -72,13 +69,11 @@ run' inputStr maybeInputCmd curGS = do
 				(Just (Walk dir), _) -> tryWalk currentLocation dir curGS
 				(Just Inventory, _) -> PrintMessage (showInventory inventory)
 				(Just Look, _) -> PrintMessage (lookAround currentLocation)
-				(Just (Investigate itmName), _) -> tryInvestigateItem itmName (locationObjects ++ inventory)
-				(Just (Pickup itmName), _) -> tryPickup itmName locationObjects curGS
-				(Just (Take str), _) ->  tryTake str locationObjects curGS
-				(Just (Inv itmName), _) -> tryInvestigateItem itmName (locationObjects ++ inventory)
+--				(Just (Examine itm), _) -> tryExamineItem itm (locationObjects ++ inventory)
+				(Just (Take itm), _) -> tryTake itm locationObjects curGS
 				(Just Help, _) -> PrintMessage helpMessage
-				(Just (Weld itmName1 itmName2), _) -> tryWeld itmName1 itmName2 (locationObjects ++ inventory) curGS
-			Just (QualifyPickup objects) -> tryTake inputStr objects curGS
+--				(Just (Weld itm1 itm2), _) -> tryWeld (objectName obj1) (objectName obj2) (locationObjects ++ inventory) curGS
+			Just (QualifyPickup objects) -> tryTakeS inputStr objects curGS
 
 run :: InputString -> Maybe InputCommand -> GS ()
 run inputStr oldInputCmd = do

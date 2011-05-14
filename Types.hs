@@ -11,21 +11,23 @@ type LongDescribedRooms = Rooms
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
 
-data ItemName =
-			Phone
-			| Table
+data Item = Phone
 			| Drawer
 			| Umbrella
 			| Rope
-			| TiedRope
 			| Hook
-	deriving (Show, Eq, Read)
+			| Table
+			| Combined Item Item
+	deriving (Eq, Show, Read)
 
-type ObjectID = (String, ItemName)
+type ObjectName = String
 
 data Object = Object {
-	objectID :: ObjectID
+	objectItem :: Item,
+	objectName :: ObjectName
 } deriving (Eq, Show, Read)
+
+type ObjectIdentifier = (ObjectName, Item)
 
 type Objects = [Object]
 type Inventory = Objects
@@ -59,24 +61,17 @@ type GS a = (StateT GameState IO a)
 
 data Command =
 			Walk Direction
-			| Go Direction
 			| Look
-			| Investigate ItemName
-			| Inv ItemName 			-- short version of Investigate
+			| Examine Item
 			| Inventory
-			| Pickup ItemName		-- pickups if itemName parsed
-			| Take String			-- tries pickup object by string
-			| Weld ItemName ItemName
-			| Open ItemName
-			| OpenO String
+			| Take Item
+			| Weld Item Item
+			| Open Item
 			| Quit
 			| Help
-			| NoCommand
 	deriving (Eq, Show, Read)
-
-data InputCommand = QualifyPickup Objects
 	
-type ParseResult = (Maybe Command, String)
+data InputCommand = QualifyPickup Objects
 
 type InputString = String
 type OutputMessage = String
