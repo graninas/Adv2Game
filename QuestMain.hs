@@ -21,14 +21,14 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"Game commands:",
 	"Walk <Direction>",
 	"Look",
-	"Investigate <ObjectName> or Inv <ObjectName>",
+	"Examine <Item>",
 	"Inventory or I",
-	"Pickup <ObjectName> or P <ObjectName>",
-	"Take <Object>",
+	"Take <Item>",
+	"Weld <Item> <Item>",
 	"Quit or Q",
 	"Help or H",
-	"", "Here <Object> is full name of object and <ObjectName> is it's simple name.",
-	"For example: 'Broken Phone' - object full name and 'Phone' is it's simple name.",
+	"", "Here <Item> is object's simple name.",
+	"For example: 'Phone' is object's simple name.",
 	"Input is case insensitive."]
 
 
@@ -45,7 +45,7 @@ parseCommand str =
 					capStrings = capitalize $ str
 					capedWords = words capStrings
 					wordsAfterCommand = unwords . tail $ capedWords
---					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
+					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
 				in
 					case reads capStrings of
 						[(x,[])] -> (Just x, [])		-- 1 вариант, полностью распознанная команда, в остатке нет ничего.
@@ -53,7 +53,7 @@ parseCommand str =
 							"Q" -> (Just Quit, "Be seen you...")
 							"I" -> (Just Inventory, [])
 							"H" -> (Just Help, [])
---							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> Take lCmdAlt) cmdTail wordsAfterCommand-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
+							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> TakeS lCmdAlt) cmdTail wordsAfterCommand-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
 							_ -> (Nothing, "Can't understand a command.")
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
@@ -71,6 +71,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Just Look, _) -> PrintMessage (lookAround currentLocation)
 				(Just (Examine itm), _) -> tryExamineItem itm (locationObjects ++ inventory)
 				(Just (Take itm), _) -> tryTake itm locationObjects curGS
+				(Just (TakeS str), _) -> tryTakeS str locationObjects curGS
 				(Just Help, _) -> PrintMessage helpMessage
 				(Just (Weld itm1 itm2), _) -> tryWeld itm1 itm2 (locationObjects ++ inventory) curGS
 			Just (QualifyPickup objects) -> tryTakeS inputStr objects curGS

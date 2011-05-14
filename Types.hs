@@ -65,6 +65,7 @@ data Command =
 			| Examine Item
 			| Inventory
 			| Take Item
+			| TakeS String
 			| Weld Item Item
 			| Open Item
 			| Quit
