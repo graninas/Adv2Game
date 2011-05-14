@@ -1,8 +1,6 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 module Types where
 import Control.Monad (mapM_)
-import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..))
+import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..), evalStateT)
 							
 data Room = SouthRoom | NorthRoom | Corridor | NoRoom
 	deriving (Eq, Show, Read)
@@ -57,9 +55,7 @@ data GameState = GameState {
 	gsInventory :: Inventory
 } deriving (Show, Read)
 
-newtype GS a = GS {
-	runGameState :: StateT GameState IO a
-} deriving (Monad, MonadIO, MonadState GameState)
+type GS a = (StateT GameState IO a)
 
 data Command =
 			Walk Direction

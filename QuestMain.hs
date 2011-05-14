@@ -104,5 +104,5 @@ main = do
 				Just gs -> return (gs, "Restoring previous game...\n")
 				Nothing -> return (initGameState, "Starting new game...\n")
 	putStrLn msg
-	_ <- evalStateT (runGameState (run "Look" Nothing)) startGameState
+	_ <- evalStateT (run "Look" Nothing) startGameState
 	putStrLn ""
