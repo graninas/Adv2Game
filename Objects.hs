@@ -122,7 +122,12 @@ showInventory = showObjects ("No objects in your inventory.", "You have: ") stan
 enumerateObjects :: IntroString -> Objects -> String
 enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: %s" n (showObject x)), \y -> y + 1, 0) ["","",""]
 
+isItemsEqual :: Item -> Item -> Bool
+Combined x1 x2 `isItemsEqual` y = x1 == y || x2 == y
+x `isItemsEqual` Combined y1 y2 = y1 == x || y2 == x
+x `isItemsEqual` y = x == y
+
 matchedObjects :: Item -> Objects -> Objects
 matchedObjects _ [] = []
-matchedObjects itm objects = filter (\x -> (objectItem x) == itm) objects
+matchedObjects itm objects = filter (\x -> isItemsEqual (objectItem x) itm) objects
 

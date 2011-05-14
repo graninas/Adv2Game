@@ -22,7 +22,7 @@ tryExamineItem :: Item -> Objects -> GameAction
 tryExamineItem itm fromObjects = let matched = matchedObjects itm fromObjects in
 									case matched of
 										[] -> PrintMessage (notVisibleObjectError itm)
-										(x:[]) -> PrintMessage (objectDescription' . objectName $ x)
+										(x:[]) -> PrintMessage (objectDescription' . objectName $ x) -- Просто печатаем описание.
 										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
 tryWalk' :: Location -> Direction -> Locations -> Maybe Location
