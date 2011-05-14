@@ -12,7 +12,7 @@ type LongDescribedRooms = Rooms
 
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
-	
+
 data ItemName =
 			Phone
 			| Table
@@ -23,10 +23,11 @@ data ItemName =
 	deriving (Show, Eq, Read)
 	
 type Item = (ItemName, Integer)
+type ObjectName = String
 
 data Object = Object {
 	oItem :: Item,
-	oName :: String,
+	oName :: ObjectName,
 	oDescription :: String,
 	oPickupFailMsg :: String
 } deriving (Eq, Show, Read)
@@ -65,15 +66,19 @@ newtype GS a = GS {
 
 data Command =
 			Walk Direction
+			| Go Direction
 			| Look
 			| Investigate ItemName
 			| Inv ItemName 			-- short version of Investigate
 			| Inventory
 			| Pickup ItemName		-- pickups if itemName parsed
-			| Take String			-- tries pickup object by string
+			| Take ObjectName		-- tries pickup object by string
 			| Weld ItemName ItemName
+			| Open ItemName
+			| OpenO ObjectName
 			| Quit
 			| Help
+			| NoCommand
 	deriving (Eq, Show, Read)
 
 data InputCommand = QualifyPickup Objects

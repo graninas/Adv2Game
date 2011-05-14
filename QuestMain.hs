@@ -31,24 +31,32 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"For example: 'Broken Phone' - object full name and 'Phone' is it's simple name.",
 	"Input is case insensitive."]
 
+
+caseCmdTail :: String -> (a -> Command) -> (String -> Command) -> (String, [(a, String)]) -> String -> (Maybe (Command), String)
+caseCmdTail doWhatMsg cmdMain cmdAlt cmdTail wordsAfterCommand = case cmdTail of
+			([], _) -> (Nothing, doWhatMsg)
+			(_, [(y, "")]) -> (Just (cmdMain y), [])
+			(_, _) -> (Just (cmdAlt wordsAfterCommand), [])
+	
 parseCommand :: String -> ParseResult
 parseCommand [] = (Nothing, [])
-parseCommand str = let
+parseCommand str =
+				let
 					capStrings = capitalize $ str
 					capedWords = words capStrings
-					wordsAfterCommand = unwords . tail $ capedWords in
+					wordsAfterCommand = unwords . tail $ capedWords
+					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
+				in
 						case reads capStrings of
 							[(x,"")] -> (Just x, [])
 							_ -> case head capedWords of
-								"Take" -> (Just (Take wordsAfterCommand), [])
+								"Take" -> (Just (Take wordsAfterCommand), [])	-- Данный пункт нужен потому, что при reads capStrings эта команда не будет распознана из-за аргумента ObjectName у конструктора.
+							--	"G" -> caseCmdTail "Go where?" (\lCmdMain -> Walk lCmdMain) (\_ -> NoCommand) cmdTail wordsAfterCommand
 								"Q" -> (Just Quit, "Be seen you...")
 								"I" -> (Just Inventory, [])
 								"H" -> (Just Help, [])
-								"P" -> case wordsAfterCommand of
-									[] -> (Nothing, "Pickup what?")
-									otherwise -> case reads wordsAfterCommand of
-												[(y, "")] -> (Just (Pickup y), [])
-												_ -> (Just (Take wordsAfterCommand), [])
+								"O" -> caseCmdTail "Open what?" (\lCmdMain -> Open lCmdMain) (\lCmdAlt -> OpenO lCmdAlt) cmdTail wordsAfterCommand
+								"P" -> caseCmdTail "Pickup what?" (\lCmdMain -> Pickup lCmdMain) (\lCmdAlt -> Take lCmdAlt) cmdTail wordsAfterCommand-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
 								_ -> (Nothing, "Can't understand a command.")
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
