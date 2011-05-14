@@ -69,7 +69,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Just (Walk dir), _) -> tryWalk currentLocation dir curGS
 				(Just Inventory, _) -> PrintMessage (showInventory inventory)
 				(Just Look, _) -> PrintMessage (lookAround currentLocation)
---				(Just (Examine itm), _) -> tryExamineItem itm (locationObjects ++ inventory)
+				(Just (Examine itm), _) -> tryExamineItem itm (locationObjects ++ inventory)
 				(Just (Take itm), _) -> tryTake itm locationObjects curGS
 				(Just Help, _) -> PrintMessage helpMessage
 --				(Just (Weld itm1 itm2), _) -> tryWeld (objectName obj1) (objectName obj2) (locationObjects ++ inventory) curGS
