@@ -16,7 +16,7 @@ initGameState = GameState {
 }
 
 updateGsLocations :: Location -> GameState -> Locations
-updateGsLocations newLoc curGS = updateLocations newLoc (gsLocations curGS)
+updateGsLocations newLoc (GameState locs _ _) = updateLocations newLoc locs
 
 tryExamineItem :: Item -> Objects -> GameAction
 tryExamineItem itm fromObjects = let matched = matchedObjects itm fromObjects in
@@ -26,7 +26,7 @@ tryExamineItem itm fromObjects = let matched = matchedObjects itm fromObjects in
 										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
 
 tryWalk' :: Location -> Direction -> Locations -> Maybe Location
-tryWalk' fromLoc toDir locs = getPathOnDirection (locPaths fromLoc) toDir >>=  \x -> getLocation (pathRoom x) locs
+tryWalk' (Location _ paths _ _ _ _) toDir locs = getPathOnDirection paths toDir >>= \x -> getLocation (pathRoom x) locs
 
 tryWalk :: Location -> Direction -> GameState -> GameAction
 tryWalk fromLoc toDir curGS = case tryWalk' fromLoc toDir (gsLocations curGS) of
@@ -76,8 +76,7 @@ applyWeld o1 o2 weldedO curGS =
 			(msg, updatedLocs, updatedInv, updatedCurLoc) = case maybeLocAndInv of
 				(Just (loc, newInv), _) -> ("\n" ++ showObject weldedO ++ " added to your Inventory.",
 										updateGsLocations clearedLoc curGS,
-										newInv,
-										clearedLoc)
+										newInv, clearedLoc)
 				(Nothing, _) -> ("", updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
 		in (msg, curGS {gsCurrentLocation = updatedCurLoc, gsLocations = updatedLocs, gsInventory = updatedInv})
 
@@ -100,12 +99,32 @@ tryWeld item1 item2 fromObjects curGS =
 					(ys) -> tooMany item2 matched2
 			(xs) -> tooMany item1 matched1
 
-tryOpen' = undefined
+applyOpen obj loc locs = let
+							newObj = obj {objectContainerState = Opened}
+							newLoc = loc {locObjects = updateObjects newObj (locObjects loc)} -- Подменяем один объект из списка объектов новым объектом.
+							newLocs = updateLocations newLoc locs -- Подменяем одну локацию из списка локаций новой локацией.
+						in (newObj, newLoc, newLocs)
+						
+tryOpenS :: String -> Objects -> GameState -> GameAction
+tryOpenS str objects curGS = case parseObject str objects of
+							(Just obj, _) -> tryOpen' obj curGS
+							(Nothing, str) -> PrintMessage str
+
+tryOpen' :: Object -> GameState -> GameAction
+tryOpen' o gs@(GameState locs curLoc _) =
+	case objectContainerState o of
+		NotContainer -> PrintMessage $ cannotBeOpenedError $ o
+		Opened -> PrintMessage $ alreadyOpenedError $ o
+		Closed -> let
+					(newObj, newLoc, newLocs) = applyOpen o curLoc locs
+					newState = gs {gsLocations = newLocs, gsCurrentLocation = newLoc}
+					msg = successOpeningObjectMsg newObj (objectContents newObj)
+				  in SaveState newState msg
 
 tryOpen :: Item -> Objects -> GameState -> GameAction
 tryOpen item fromObjects curGS =
-		let matched = containerObjects (matchedObjects item fromObjects) in
+		let matched = matchedObjects item fromObjects in
 			case matched of
 				[] -> PrintMessage (notVisibleObjectError item)
 				(x:[]) -> tryOpen' x curGS
-				(xs) -> ReadMessagedUserInput (enumerateObjects "What object you want to open: " xs) (QualifyPickup matched)
+				(xs) -> ReadMessagedUserInput (enumerateObjects "What object you want to open: " xs) (QualifyOpen matched)

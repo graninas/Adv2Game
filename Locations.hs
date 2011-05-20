@@ -25,7 +25,7 @@ locationLongDesc' room = case room of
 	
 locationObjects' :: Room -> Objects
 locationObjects' room = case room of
-	SouthRoom -> map object [homeDrawer, homePhone, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2, homePhone2]
+	SouthRoom -> objectDrawer : map object [homePhone, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2, homePhone2]
 	NorthRoom -> map object [homeUmbrella2]
 	_ -> []
 	

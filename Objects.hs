@@ -80,17 +80,9 @@ type IntroString = String
 type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
 type ShowObjectsBoundStrings = [String]
 
+-- Выводит информацию об объекте. Не перекрывает show, чтобы оставить возможность сохранять данные на диск.
 showObject :: Object -> String
 showObject = objectName
-
-notVisibleObjectError :: Item -> String
-notVisibleObjectError item = printf "You don't see any %s here." (show item)
-
-successPickupingObjectMsg :: Object -> String
-successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
-
-failurePickupingObjectMsg :: Object -> String
-failurePickupingObjectMsg = objectPickupFailMessage' . objectName
 
 showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
 showObjects pref _          _         [] = fst pref
@@ -118,16 +110,20 @@ modifyObjectShowingFunc (showingLambda, enumChangeF, enumVal) = (showingLambda, 
 applyObjectShowingF :: ShowObjectsFunc -> Object -> String
 applyObjectShowingF (showingLambda, _, enumVal) obj = showingLambda obj enumVal
 
+-- Перечисляет объекты в виде [списка]. Если не передана строка Intro, будет подставлена строка по умолчанию.
 describeObjects :: IntroString -> Objects -> String
 describeObjects [] = showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs
 describeObjects str = showObjects ([], str) standartObjectShowingF standartBoundStrs
 
+-- Показывает особые свойства объектов (если они есть).
 investigateObjects :: IntroString -> Objects -> String
 investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (objectDescription'. objectName $ x)), \_ -> 0, 0) ["","",""]
 
+-- Перечисляет объекты инвентаря в виде [списка]. Если инвентарь пуст, так и сообщает.
 showInventory :: Inventory -> String
 showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
 
+-- Перечисляет объекты в виде пронумерованного списка, начинающегося с 0.
 enumerateObjects :: IntroString -> Objects -> String
 enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: %s" n (showObject x)), \y -> y + 1, 0) ["","",""]
 
@@ -140,5 +136,27 @@ matchedObjects :: Item -> Objects -> Objects
 matchedObjects _ [] = []
 matchedObjects itm objects = filter (\x -> isItemsEqual (objectItem x) itm) objects
 
-containerObjects :: Objects -> Objects
-containerObjects = filter isContainer
+updateObjects :: Object -> Objects -> Objects
+updateObjects obj objects = obj : [newObj | newObj <- objects, (objectName newObj) /= (objectName obj)]
+
+----------- Messages, Errors ------------
+
+notVisibleObjectError :: Item -> String
+notVisibleObjectError item = printf "You don't see any %s here." (show item)
+
+cannotBeOpenedError :: Object -> String
+cannotBeOpenedError obj = printf "The %s cannot be opened." (showObject obj)
+
+alreadyOpenedError :: Object -> String
+alreadyOpenedError obj = printf "%s already open." (showObject obj)
+
+successPickupingObjectMsg :: Object -> String
+successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
+
+failurePickupingObjectMsg :: Object -> String
+failurePickupingObjectMsg = objectPickupFailMessage' . objectName
+
+successOpeningObjectMsg :: Object -> Objects -> String
+successOpeningObjectMsg obj [] = "Opened."
+successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject obj) (showObject o)
+successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: ") os

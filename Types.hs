@@ -35,7 +35,7 @@ data Object = Object {
 	objectItem :: Item,
 	objectName :: ObjectName,
 	objectContainerState :: ContainerState,
-	objectContains :: Objects
+	objectContents :: Objects
 } deriving (Eq, Show, Read)
 
 type ObjectIdentifier = (ObjectName, Item)
@@ -84,7 +84,9 @@ data Command =
 			| Help
 	deriving (Eq, Show, Read)
 	
-data InputCommand = QualifyPickup Objects
+data InputCommand =
+		QualifyPickup Objects
+		| QualifyOpen Objects
 
 type InputString = String
 type OutputMessage = String
