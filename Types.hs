@@ -11,20 +11,31 @@ type LongDescribedRooms = Rooms
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
 
-data Item = Phone
-			| Drawer
-			| Umbrella
-			| Rope
-			| Hook
-			| Table
-			| Combined Item Item
+data Item =
+		Combined Item Item
+		| Phone
+		| Drawer
+		| Umbrella
+		| Rope
+		| Hook
+		| Table
+		| Lighter
+			
+	deriving (Eq, Show, Read)
+	
+data ContainerState =
+			NotContainer
+			| Opened
+			| Closed
 	deriving (Eq, Show, Read)
 
 type ObjectName = String
 
 data Object = Object {
 	objectItem :: Item,
-	objectName :: ObjectName
+	objectName :: ObjectName,
+	objectContainerState :: ContainerState,
+	objectContains :: Objects
 } deriving (Eq, Show, Read)
 
 type ObjectIdentifier = (ObjectName, Item)

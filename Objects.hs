@@ -16,6 +16,10 @@ homeDrawer = ("Drawer", Drawer)
 rope = ("Rope", Rope)
 homeHook = ("Hook", Hook)
 ropeOnHook = ("Rope on hook", Combined Rope Hook)
+homeLighter = ("Lighter", Lighter)
+
+objectLighter = Object (snd homeLighter) (fst homeLighter) NotContainer []
+objectDrawer = Object (snd homeDrawer) (fst homeDrawer) Closed [objectLighter]
 
 objectDescription' :: ObjectName -> String
 objectDescription' objName
@@ -43,6 +47,14 @@ weld o1 o2
 
 ----------------------
 
+object :: ObjectIdentifier -> Object
+object objID = Object (snd objID) (fst objID) NotContainer []
+
+isContainer :: Object -> Bool
+isContainer (Object _ _ contState _)
+	| contState /= NotContainer =  True
+	| otherwise = False
+
 readObject :: String -> Objects -> Objects
 readObject [] _ = []
 readObject _ [] = []
@@ -67,9 +79,6 @@ type ObjectShowPrefix = (String, String)
 type IntroString = String
 type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
 type ShowObjectsBoundStrings = [String]
-
-object :: ObjectIdentifier -> Object
-object objID = Object {objectItem = snd objID, objectName = fst objID}
 
 showObject :: Object -> String
 showObject = objectName
@@ -131,3 +140,5 @@ matchedObjects :: Item -> Objects -> Objects
 matchedObjects _ [] = []
 matchedObjects itm objects = filter (\x -> isItemsEqual (objectItem x) itm) objects
 
+containerObjects :: Objects -> Objects
+containerObjects = filter isContainer

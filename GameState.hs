@@ -99,3 +99,13 @@ tryWeld item1 item2 fromObjects curGS =
 						(Nothing, str) ->  PrintMessage str
 					(ys) -> tooMany item2 matched2
 			(xs) -> tooMany item1 matched1
+
+tryOpen' = undefined
+
+tryOpen :: Item -> Objects -> GameState -> GameAction
+tryOpen item fromObjects curGS =
+		let matched = containerObjects (matchedObjects item fromObjects) in
+			case matched of
+				[] -> PrintMessage (notVisibleObjectError item)
+				(x:[]) -> tryOpen' x curGS
+				(xs) -> ReadMessagedUserInput (enumerateObjects "What object you want to open: " xs) (QualifyPickup matched)

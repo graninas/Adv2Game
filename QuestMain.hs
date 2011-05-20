@@ -80,6 +80,7 @@ run' inputStr maybeInputCmd curGS = do
 				(Just (TakeS str), _) -> tryTakeS str locationObjects curGS
 				(Just Help, _) -> PrintMessage helpMessage
 				(Just (Weld itm1 itm2), _) -> tryWeld itm1 itm2 (locationObjects ++ inventory) curGS
+				(Just (Open itm), _) -> tryOpen itm (locationObjects ++ inventory) curGS
 			Just (QualifyPickup objects) -> tryTakeS inputStr objects curGS
 
 run :: InputString -> Maybe InputCommand -> GS ()
