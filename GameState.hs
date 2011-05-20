@@ -99,11 +99,13 @@ tryWeld item1 item2 fromObjects curGS =
 					(ys) -> tooMany item2 matched2
 			(xs) -> tooMany item1 matched1
 
-applyOpen obj loc locs = let
-							newObj = obj {objectContainerState = Opened}
-							newLoc = loc {locObjects = updateObjects newObj (locObjects loc)} -- Подменяем один объект из списка объектов новым объектом.
-							newLocs = updateLocations newLoc locs -- Подменяем одну локацию из списка локаций новой локацией.
-						in (newObj, newLoc, newLocs)
+
+applyOpen obj loc locs inv = let
+								newObj = obj {objectContainerState = Opened}
+								newLoc = loc {locObjects = updateObjects newObj (locObjects loc)} -- Подменяем один объект из списка объектов новым объектом.
+								newLocs = updateLocations newLoc locs -- Подменяем одну локацию из списка локаций новой локацией.
+								newInv = updateObjects newObj inv
+							 in (newObj, newLoc, newLocs, newInv)
 						
 tryOpenS :: String -> Objects -> GameState -> GameAction
 tryOpenS str objects curGS = case parseObject str objects of
@@ -111,20 +113,20 @@ tryOpenS str objects curGS = case parseObject str objects of
 							(Nothing, str) -> PrintMessage str
 
 tryOpen' :: Object -> GameState -> GameAction
-tryOpen' o gs@(GameState locs curLoc _) =
+tryOpen' o gs@(GameState locs curLoc inv) =
 	case objectContainerState o of
 		NotContainer -> PrintMessage $ cannotBeOpenedError $ o
 		Opened -> PrintMessage $ alreadyOpenedError $ o
 		Closed -> let
-					(newObj, newLoc, newLocs) = applyOpen o curLoc locs
-					newState = gs {gsLocations = newLocs, gsCurrentLocation = newLoc}
+					(newObj, newLoc, newLocs, newInv) = applyOpen o curLoc locs inv
+					newState = gs {gsLocations = newLocs, gsCurrentLocation = newLoc, gsInventory = newInv}
 					msg = successOpeningObjectMsg newObj (objectContents newObj)
 				  in SaveState newState msg
 
-tryOpen :: Item -> Objects -> GameState -> GameAction
-tryOpen item fromObjects curGS =
-		let matched = matchedObjects item fromObjects in
-			case matched of
-				[] -> PrintMessage (notVisibleObjectError item)
-				(x:[]) -> tryOpen' x curGS
-				(xs) -> ReadMessagedUserInput (enumerateObjects "What object you want to open: " xs) (QualifyOpen matched)
+tryOpen :: Item -> Objects -> Inventory -> GameState -> GameAction
+tryOpen item locObjects inv curGS = 
+	let matched = matchedObjects item (locObjects ++ inv) in
+		case matched of
+			[] -> PrintMessage (notVisibleObjectError item)
+			(x:[]) -> tryOpen' x curGS
+			(xs) -> ReadMessagedUserInput (enumerateObjects "What object you want to open: " xs) (QualifyOpen matched)
