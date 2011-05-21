@@ -63,17 +63,17 @@ readObject s objects = filter (\x -> (capitalizedOName x) == capitalizedS) objec
 		capitalizedS = capitalize s
 		capitalizedOName = capitalize . objectName
 
-parseObject :: String -> Objects -> (Maybe Object, String)
-parseObject _ [] = (Nothing, "No objects to match.")
-parseObject [] _ = (Nothing, "What?")
+parseObject :: String -> Objects -> Either String Object
+parseObject _ [] = Left "No objects to match."
+parseObject [] _ = Left "What?"
 parseObject str objects = case readObject str objects of
 							[] -> case reads str :: [(Int, String)] of
 								[(x,"")] -> case x >= 0 && x < (length objects) of
-										True -> (Just (objects !! x), "")
-										False -> (Nothing, printf "Object with index %d does not exist." x)
-								_ -> (Nothing, printf "Can't parse an object '%s'." str)
-							(y:[]) -> (Just y, "")
-							(ys) -> (Nothing, describeObjects "Ambiguous objects: " ys)
+										True -> Right (objects !! x)
+										False -> Left $ printf "Object with index %d does not exist." x
+								_ -> Left $ printf "Can't parse an object '%s'." str
+							(y:[]) -> Right y
+							(ys) -> Left $ describeObjects "Ambiguous objects: " ys
 
 type ObjectShowPrefix = (String, String)
 type IntroString = String

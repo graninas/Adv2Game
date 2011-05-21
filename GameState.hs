@@ -41,8 +41,8 @@ tryWalk fromLoc toDir curGS = case tryWalk' fromLoc toDir (gsLocations curGS) of
 
 tryTakeS :: String -> Objects -> GameState -> GameAction
 tryTakeS str objects curGS = case parseObject str objects of
-							(Just obj, _) -> tryTake' obj curGS
-							(Nothing, str) -> PrintMessage str
+							Right obj -> tryTake' obj curGS
+							Left str -> PrintMessage str
 
 pickup :: Object -> Location -> Inventory -> (Maybe (Location, Inventory), String)
 pickup obj loc inv = case isPickupable obj of
@@ -109,8 +109,8 @@ applyOpen obj loc locs inv = let
 						
 tryOpenS :: String -> Objects -> GameState -> GameAction
 tryOpenS str objects curGS = case parseObject str objects of
-							(Just obj, _) -> tryOpen' obj curGS
-							(Nothing, str) -> PrintMessage str
+							Right obj -> tryOpen' obj curGS
+							Left str -> PrintMessage str
 
 tryOpen' :: Object -> GameState -> GameAction
 tryOpen' o gs@(GameState locs curLoc inv) =
