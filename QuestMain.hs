@@ -71,6 +71,7 @@ run' inputStr maybeInputCmd curGS = do
 			Nothing -> case parseCommand inputStr of
 				(Nothing, []) -> ReadUserInput
 				(Nothing, str) -> PrintMessage str
+				(Just New, _) -> StartNewGame
 				(Just Quit, _) -> QuitGame "Be seen you..."
 				(Just (Walk dir), _) -> tryWalk currentLocation dir curGS
 				(Just Inventory, _) -> PrintMessage (showInventory inventory)
@@ -94,6 +95,7 @@ run inputStr oldInputCmd = do
 		ReadUserInput -> ioInMsgGS >>= \x -> run x Nothing
 		ReadMessagedUserInput inOutString newInputCmd -> ioOutMsgGS inOutString >> ioInMsgGS >>= \x -> run x (Just newInputCmd)
 		SaveState newState outMsg -> ioOutMsgGS outMsg >> put newState >> return newState >>= saveGame >> run "" Nothing
+		StartNewGame -> put initGameState >> ioOutMsgGS "Starting new game...\n" >> run "Look" Nothing
 
 loadGame str = case reads str of
 				[(x,"")] -> Just x

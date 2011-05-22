@@ -17,9 +17,11 @@ rope = ("Rope", Rope)
 homeHook = ("Hook", Hook)
 ropeOnHook = ("Rope on hook", Combined Rope Hook)
 homeLighter = ("Lighter", Lighter)
+homeDiary = ("Diary", Diary)
 
 objectLighter = Object (snd homeLighter) (fst homeLighter) NotContainer []
-objectDrawer = Object (snd homeDrawer) (fst homeDrawer) Closed [objectLighter]
+objectDiary = Object (snd homeDiary) (fst homeDiary) NotContainer []
+objectDrawer = Object (snd homeDrawer) (fst homeDrawer) Closed [objectLighter, objectDiary]
 
 objectDescription' :: ObjectName -> String
 objectDescription' objName
@@ -75,29 +77,6 @@ parseObject str objects = case readObject str objects of
 							(y:[]) -> Right y
 							(ys) -> Left $ describeObjects "Ambiguous objects: " ys
 
-type ObjectShowPrefix = (String, String)
-type IntroString = String
-type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
-type ShowObjectsBoundStrings = [String]
-
--- Выводит информацию об объекте. Не перекрывает show, чтобы оставить возможность сохранять данные на диск.
-showObject :: Object -> String
-showObject = objectName
-
-showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
-showObjects pref _          _         [] = fst pref
-showObjects pref lFuncDescr boundStrs xs = snd pref ++ (showLeftBracket boundStrs) ++ showObjects' xs lFuncDescr
-	where
-		showObjects' (x:[]) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showRightBracket boundStrs)
-		showObjects' (x:xs) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showDelimiter boundStrs) ++ showObjects' xs (modifyObjectShowingFunc lFuncDescr)
-
-showLeftBracket :: ShowObjectsBoundStrings -> String
-showRightBracket :: ShowObjectsBoundStrings -> String
-showDelimiter :: ShowObjectsBoundStrings -> String
-showLeftBracket = head
-showRightBracket = head . tail
-showDelimiter = last
-
 -- Позволяет сравнивать объекты по их частичному совпадению.
 isItemsEquivalent :: Item -> Item -> Bool
 Combined x1 x2 `isItemsEquivalent` y = x1 == y || x2 == y
@@ -137,7 +116,7 @@ failurePickupingObjectMsg = objectPickupFailMessage' . objectName
 successOpeningObjectMsg :: Object -> Objects -> String
 successOpeningObjectMsg obj [] = "Opened."
 successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject obj) (showObject o)
-successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: ") os
+successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: " (showObject obj)) os
 
 instance Openable Object where
 	open obj = case objectContainerState obj of
@@ -148,27 +127,56 @@ instance Openable Object where
 		Opened -> Right $ obj {objectContainerState = Opened}
 		Closed -> Left $ alreadyClosedError obj
 		NotContainer -> Left $ cannotBeClosedError obj
+	isOpened = (== Opened) . objectContainerState
+	isClosed = (== Closed) . objectContainerState
 	showStated o@(Object _ _ Opened _) = "(opened) " ++ showObject o
 	showStated o@(Object _ _ Closed _) = "" ++ showObject o
 	showStated o@(Object _ _ NotContainer _) = showObject o
-	
+	showContents o@(Object _ _ Opened []) = []
+	showContents o@(Object _ _ Opened xs) = describeObjects (printf "\nThe %s contains " (showObject o)) xs
+	showContents _ = []
+
 ----------------------- Функции отображения объекта и списка объектов. ---------------------------
+type ObjectShowPrefix = (String, String)
+type IntroString = String
+type ShowObjectsFunc = ((Object -> Int -> String), (Int -> Int), Int)
+type ShowObjectsBoundStrings = [String]
+
+-- Вспомогательные функции
+showLeftBracket :: ShowObjectsBoundStrings -> String
+showRightBracket :: ShowObjectsBoundStrings -> String
+showDelimiter :: ShowObjectsBoundStrings -> String
+showLeftBracket = head
+showRightBracket = head . tail
+showDelimiter = last
+
 standartObjectShowingF :: ShowObjectsFunc
 standartObjectShowingF = ((\x _ -> showStated x), \_ -> 0, 0)
 
 standartBoundStrs :: ShowObjectsBoundStrings
 standartBoundStrs = ["[", "].", ", "]
 
-modifyObjectShowingFunc :: ShowObjectsFunc -> ShowObjectsFunc
-modifyObjectShowingFunc (showingLambda, enumChangeF, enumVal) = (showingLambda, enumChangeF, enumChangeF enumVal)
+-- Выводит информацию об объекте. Не перекрывает show, чтобы оставить возможность сохранять данные на диск.
+showObject :: Object -> String
+showObject = objectName
 
 applyObjectShowingF :: ShowObjectsFunc -> Object -> String
 applyObjectShowingF (showingLambda, _, enumVal) obj = showingLambda obj enumVal
 
+modifyObjectShowingF :: ShowObjectsFunc -> ShowObjectsFunc
+modifyObjectShowingF (showingLambda, enumChangeF, enumVal) = (showingLambda, enumChangeF, enumChangeF enumVal)
+
+showObjects :: ObjectShowPrefix -> ShowObjectsFunc -> ShowObjectsBoundStrings -> Objects -> String
+showObjects pref _          _         [] = fst pref
+showObjects pref lFuncDescr boundStrs xs = snd pref ++ (showLeftBracket boundStrs) ++ showObjects' xs lFuncDescr
+	where
+		showObjects' (x:[]) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showRightBracket boundStrs)
+		showObjects' (x:xs) lFuncDescr = applyObjectShowingF lFuncDescr x ++ (showDelimiter boundStrs) ++ showObjects' xs (modifyObjectShowingF lFuncDescr)
+
 -- Перечисляет объекты в виде [списка]. Если не передана строка Intro, будет подставлена строка по умолчанию.
 describeObjects :: IntroString -> Objects -> String
-describeObjects [] = showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs
-describeObjects str = showObjects ([], str) standartObjectShowingF standartBoundStrs
+describeObjects [] os = (showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs os) ++ unwords(map showContents os)
+describeObjects str os = (showObjects ([], str) standartObjectShowingF standartBoundStrs os) ++ unwords(map showContents os)
 
 -- Показывает особые свойства объектов (если они есть).
 investigateObjects :: IntroString -> Objects -> String

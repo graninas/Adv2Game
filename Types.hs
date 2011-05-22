@@ -20,6 +20,7 @@ data Item =
 		| Hook
 		| Table
 		| Lighter
+		| Diary
 			
 	deriving (Show, Read, Ord)
 	
@@ -87,6 +88,7 @@ data Command =
 			| TakeS String
 			| Weld Item Item
 			| Open Item
+			| New
 			| Quit
 			| Help
 	deriving (Eq, Show, Read)
@@ -105,8 +107,12 @@ data GameAction =
 				| ReadUserInput
 				| ReadMessagedUserInput InputOutputString InputCommand
 				| SaveState GameState OutputMessage
+				| StartNewGame
 				
 class Openable a where
 	open :: a -> Either String a
 	close :: a -> Either String a
+	isOpened :: a -> Bool
+	isClosed :: a -> Bool
 	showStated :: a -> String
+	showContents :: a -> String
