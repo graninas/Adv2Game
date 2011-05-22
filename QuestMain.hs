@@ -20,10 +20,10 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"",
 	"Game commands:",
 	"Walk <Direction>",
-	"Look",
-	"Examine <Item>",
+	"Look or L",
+	"Examine <Item> or E <Item>",
 	"Inventory or I",
-	"Take <Item>",
+	"Take <Item> or T <Item>",
 	"Weld <Item> <Item>",
 	"Quit or Q",
 	"Help or H",
@@ -31,17 +31,16 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"For example: 'Phone' is object's simple name.",
 	"Input is case insensitive."]
 
--- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию. С помощью lambda!
+-- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
 -- Функция принимает короткую команду и пытается найти после этой команды объекты.
 -- Допускает два конструктора над короткой командой: главный (cmdMain) и альтернативный (cmdAlt).
 -- Альтернативные конструкторы команд (оканчиваются на S) указывают, что объекты будут распознаны в строке где-то в другом месте.
 -- Если передана только короткая команда, выдает сообщение (doWhatMsg).
-
 caseCmdTail :: String -> (a -> Command) -> (String -> Command) -> (String, [(a, String)]) -> Either String Command
 caseCmdTail doWhatMsg cmdMain cmdAlt cmdTail = case cmdTail of
 			(_, [(y, "")]) -> Right (cmdMain y)
-			(wordsAfterCommand, []) -> Right (cmdAlt wordsAfterCommand)
 			([], _) -> Left doWhatMsg
+			(wordsAfterCommand, []) -> Right (cmdAlt wordsAfterCommand)
 	
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []

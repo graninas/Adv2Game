@@ -6,11 +6,10 @@ import Paths
 import Objects
 
 import Text.Printf(printf)
-import Char(isDigit, digitToInt)
 
 initGameState :: GameState
 initGameState = GameState {
-	gsLocations = [location SouthRoom, location NorthRoom],
+	gsLocations = map location [SouthRoom, NorthRoom],
 	gsCurrentLocation = location SouthRoom,
 	gsInventory = []
 }
@@ -122,8 +121,7 @@ tryOpen' o gs@(GameState locs curLoc inv) =
 					  in SaveState newState msg
 
 tryOpen :: Item -> Objects -> Inventory -> GameState -> GameAction
-tryOpen item locObjects inv curGS = 
-	let matched = matchedObjects item (locObjects ++ inv) in
+tryOpen item locObjects inv curGS = let matched = matchedObjects item (locObjects ++ inv) in
 		case matched of
 			[] -> PrintMessage (notVisibleObjectError item)
 			(x:[]) -> tryOpen' x curGS
