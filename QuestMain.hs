@@ -58,8 +58,9 @@ parseCommand str =
 							"Q" -> Right (Quit "Be seen you...")
 							"I" -> Right Inventory
 							"H" -> Right Help
-							"E" -> caseCmdTail "Examine what?" (\lCmdMain -> Examine lCmdMain) (\lCmdAlt -> ExamineS lCmdAlt) cmdTail
-							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> TakeS lCmdAlt) cmdTail
+							"E" -> caseCmdTail "Examine what?" Examine ExamineS cmdTail
+							"T" -> caseCmdTail "Take what?" Take TakeS cmdTail
+							"L" -> Right Look
 							_ -> Left "Can't understand a command."
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
