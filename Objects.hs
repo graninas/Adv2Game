@@ -98,8 +98,63 @@ showLeftBracket = head
 showRightBracket = head . tail
 showDelimiter = last
 
+-- Позволяет сравнивать объекты по их частичному совпадению.
+isItemsEquivalent :: Item -> Item -> Bool
+Combined x1 x2 `isItemsEquivalent` y = x1 == y || x2 == y
+x `isItemsEquivalent` Combined y1 y2 = y1 == x || y2 == x
+x `isItemsEquivalent` y = x == y
+
+matchedObjects :: Item -> Objects -> Objects
+matchedObjects _ [] = []
+matchedObjects itm objects = filter (\x -> isItemsEquivalent (objectItem x) itm) objects
+
+updateObjects :: Object -> Objects -> Objects
+updateObjects obj objects = obj : [newObj | newObj <- objects, newObj /= obj]
+
+----------- Messages, Errors ------------
+
+notVisibleObjectError :: Item -> String
+notVisibleObjectError item = printf "You don't see any %s here." (show item)
+
+cannotBeOpenedError :: Object -> String
+cannotBeOpenedError obj = printf "The %s cannot be opened." (showObject obj)
+
+cannotBeClosedError :: Object -> String
+cannotBeClosedError obj = printf "The %s cannot be closed." (showObject obj)
+
+alreadyOpenedError :: Object -> String
+alreadyOpenedError obj = printf "%s already opened." (showObject obj)
+
+alreadyClosedError :: Object -> String
+alreadyClosedError obj = printf "%s already closed." (showObject obj)
+
+successPickupingObjectMsg :: Object -> String
+successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
+
+failurePickupingObjectMsg :: Object -> String
+failurePickupingObjectMsg = objectPickupFailMessage' . objectName
+
+successOpeningObjectMsg :: Object -> Objects -> String
+successOpeningObjectMsg obj [] = "Opened."
+successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject obj) (showObject o)
+successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: ") os
+
+instance Openable Object where
+	open obj = case objectContainerState obj of
+		Opened -> Left $ alreadyOpenedError obj
+		Closed -> Right $ obj {objectContainerState = Opened}
+		NotContainer -> Left $ cannotBeOpenedError obj
+	close obj = case objectContainerState obj of
+		Opened -> Right $ obj {objectContainerState = Opened}
+		Closed -> Left $ alreadyClosedError obj
+		NotContainer -> Left $ cannotBeClosedError obj
+	showStated o@(Object _ _ Opened _) = "(opened) " ++ showObject o
+	showStated o@(Object _ _ Closed _) = "" ++ showObject o
+	showStated o@(Object _ _ NotContainer _) = showObject o
+	
+----------------------- Функции отображения объекта и списка объектов. ---------------------------
 standartObjectShowingF :: ShowObjectsFunc
-standartObjectShowingF = ((\x _ -> showObject x), \_ -> 0, 0)
+standartObjectShowingF = ((\x _ -> showStated x), \_ -> 0, 0)
 
 standartBoundStrs :: ShowObjectsBoundStrings
 standartBoundStrs = ["[", "].", ", "]
@@ -126,37 +181,3 @@ showInventory = showObjects ("No objects in your inventory.", "You have: ") stan
 -- Перечисляет объекты в виде пронумерованного списка, начинающегося с 0.
 enumerateObjects :: IntroString -> Objects -> String
 enumerateObjects str = showObjects ([], str) ((\x n -> printf "\n%d: %s" n (showObject x)), \y -> y + 1, 0) ["","",""]
-
-isItemsEqual :: Item -> Item -> Bool
-Combined x1 x2 `isItemsEqual` y = x1 == y || x2 == y
-x `isItemsEqual` Combined y1 y2 = y1 == x || y2 == x
-x `isItemsEqual` y = x == y
-
-matchedObjects :: Item -> Objects -> Objects
-matchedObjects _ [] = []
-matchedObjects itm objects = filter (\x -> isItemsEqual (objectItem x) itm) objects
-
-updateObjects :: Object -> Objects -> Objects
-updateObjects obj objects = obj : [newObj | newObj <- objects, (objectName newObj) /= (objectName obj)]
-
------------ Messages, Errors ------------
-
-notVisibleObjectError :: Item -> String
-notVisibleObjectError item = printf "You don't see any %s here." (show item)
-
-cannotBeOpenedError :: Object -> String
-cannotBeOpenedError obj = printf "The %s cannot be opened." (showObject obj)
-
-alreadyOpenedError :: Object -> String
-alreadyOpenedError obj = printf "%s already open." (showObject obj)
-
-successPickupingObjectMsg :: Object -> String
-successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
-
-failurePickupingObjectMsg :: Object -> String
-failurePickupingObjectMsg = objectPickupFailMessage' . objectName
-
-successOpeningObjectMsg :: Object -> Objects -> String
-successOpeningObjectMsg obj [] = "Opened."
-successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject obj) (showObject o)
-successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: ") os

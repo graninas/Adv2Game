@@ -100,13 +100,12 @@ tryWeld item1 item2 fromObjects curGS =
 			(xs) -> tooMany item1 matched1
 
 
-applyOpen obj loc locs inv = let
-								newObj = obj {objectContainerState = Opened}
+applyOpenedObject newObj loc locs inv = let
 								newLoc = loc {locObjects = updateObjects newObj (locObjects loc)} -- Подменяем один объект из списка объектов новым объектом.
 								newLocs = updateLocations newLoc locs -- Подменяем одну локацию из списка локаций новой локацией.
 								newInv = updateObjects newObj inv
-							 in (newObj, newLoc, newLocs, newInv)
-						
+							 in (newLoc, newLocs, newInv)
+
 tryOpenS :: String -> Objects -> GameState -> GameAction
 tryOpenS str objects curGS = case parseObject str objects of
 							Right obj -> tryOpen' obj curGS
@@ -114,14 +113,13 @@ tryOpenS str objects curGS = case parseObject str objects of
 
 tryOpen' :: Object -> GameState -> GameAction
 tryOpen' o gs@(GameState locs curLoc inv) =
-	case objectContainerState o of
-		NotContainer -> PrintMessage $ cannotBeOpenedError $ o
-		Opened -> PrintMessage $ alreadyOpenedError $ o
-		Closed -> let
-					(newObj, newLoc, newLocs, newInv) = applyOpen o curLoc locs inv
-					newState = gs {gsLocations = newLocs, gsCurrentLocation = newLoc, gsInventory = newInv}
-					msg = successOpeningObjectMsg newObj (objectContents newObj)
-				  in SaveState newState msg
+	case open o of
+		Left errorMsg -> PrintMessage errorMsg
+		Right newO -> let
+						(newLoc, newLocs, newInv) = applyOpenedObject newO curLoc locs inv
+						newState = gs {gsLocations = newLocs, gsCurrentLocation = newLoc, gsInventory = newInv}
+						msg = successOpeningObjectMsg newO (objectContents newO)
+					  in SaveState newState msg
 
 tryOpen :: Item -> Objects -> Inventory -> GameState -> GameAction
 tryOpen item locObjects inv curGS = 

@@ -10,7 +10,7 @@ type LongDescribedRooms = Rooms
 
 data Direction = North | South | West | East | NoDirection
 	deriving (Show, Eq, Read)
-
+	
 data Item =
 		Combined Item Item
 		| Phone
@@ -21,8 +21,12 @@ data Item =
 		| Table
 		| Lighter
 			
-	deriving (Eq, Show, Read)
+	deriving (Show, Read, Ord)
 	
+instance Eq Item where
+	(Combined i1 i2) == (Combined i3 i4) = i1 == i3 && i2 == i4
+	x1 == x2 = x1 `compare` x2 == EQ
+
 data ContainerState =
 			NotContainer
 			| Opened
@@ -36,7 +40,10 @@ data Object = Object {
 	objectName :: ObjectName,
 	objectContainerState :: ContainerState,
 	objectContents :: Objects
-} deriving (Eq, Show, Read)
+} deriving (Show, Read)
+
+instance Eq Object where
+	(Object item1 name1 _ _)  == (Object item2 name2 _ _) = item1 == item2 && name1 == name2
 
 type ObjectIdentifier = (ObjectName, Item)
 
@@ -98,3 +105,8 @@ data GameAction =
 				| ReadUserInput
 				| ReadMessagedUserInput InputOutputString InputCommand
 				| SaveState GameState OutputMessage
+				
+class Openable a where
+	open :: a -> Either String a
+	close :: a -> Either String a
+	showStated :: a -> String
