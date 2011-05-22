@@ -89,7 +89,7 @@ data Command =
 			| Weld Item Item
 			| Open Item
 			| New
-			| Quit
+			| Quit String
 			| Help
 	deriving (Eq, Show, Read)
 	

@@ -37,14 +37,14 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 -- Альтернативные конструкторы команд (оканчиваются на S) указывают, что объекты будут распознаны в строке где-то в другом месте.
 -- Если передана только короткая команда, выдает сообщение (doWhatMsg).
 
-caseCmdTail :: String -> (a -> Command) -> (String -> Command) -> (String, [(a, String)]) -> (Maybe (Command), String)
+caseCmdTail :: String -> (a -> Command) -> (String -> Command) -> (String, [(a, String)]) -> Either String Command
 caseCmdTail doWhatMsg cmdMain cmdAlt cmdTail = case cmdTail of
-			(_, [(y, "")]) -> (Just (cmdMain y), [])
-			(wordsAfterCommand, []) -> (Just (cmdAlt wordsAfterCommand), [])
-			([], _) -> (Nothing, doWhatMsg)
+			(_, [(y, "")]) -> Right (cmdMain y)
+			(wordsAfterCommand, []) -> Right (cmdAlt wordsAfterCommand)
+			([], _) -> Left doWhatMsg
 	
-parseCommand :: String -> (Maybe Command, String)
-parseCommand [] = (Nothing, [])
+parseCommand :: String -> Either String Command
+parseCommand [] = Left []
 parseCommand str =
 				let
 					capStrings = capitalize $ str
@@ -53,14 +53,14 @@ parseCommand str =
 					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
 				in
 					case reads capStrings of
-						[(x,[])] -> (Just x, [])		-- 1 вариант, полностью распознанная команда, в остатке нет ничего.
-						_ -> case head capedWords of	-- Короткие и строковые команды
-							"Q" -> (Just Quit, "Be seen you...")
-							"I" -> (Just Inventory, [])
-							"H" -> (Just Help, [])
+						[(x,[])] -> Right x				-- 1 вариант, полностью распознанная команда, в остатке нет ничего.
+						_ -> case head capedWords of	-- Несколько вариантов, или есть остаток. Распознаются короткие и строковые команды
+							"Q" -> Right (Quit "Be seen you...")
+							"I" -> Right Inventory
+							"H" -> Right Help
 							"E" -> caseCmdTail "Examine what?" (\lCmdMain -> Examine lCmdMain) (\lCmdAlt -> ExamineS lCmdAlt) cmdTail
 							"T" -> caseCmdTail "Take what?" (\lCmdMain -> Take lCmdMain) (\lCmdAlt -> TakeS lCmdAlt) cmdTail
-							_ -> (Nothing, "Can't understand a command.")
+							_ -> Left "Can't understand a command."
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do
@@ -69,19 +69,19 @@ run' inputStr maybeInputCmd curGS = do
 		let inventory = gsInventory curGS
 		case maybeInputCmd of
 			Nothing -> case parseCommand inputStr of
-				(Nothing, []) -> ReadUserInput
-				(Nothing, str) -> PrintMessage str
-				(Just New, _) -> StartNewGame
-				(Just Quit, _) -> QuitGame "Be seen you..."
-				(Just (Walk dir), _) -> tryWalk currentLocation dir curGS
-				(Just Inventory, _) -> PrintMessage (showInventory inventory)
-				(Just Look, _) -> PrintMessage (lookAround currentLocation)
-				(Just (Examine itm), _) -> tryExamineItem itm (locationObjects ++ inventory)
-				(Just (Take itm), _) -> tryTake itm locationObjects curGS
-				(Just (TakeS str), _) -> tryTakeS str locationObjects curGS
-				(Just Help, _) -> PrintMessage helpMessage
-				(Just (Weld itm1 itm2), _) -> tryWeld itm1 itm2 (locationObjects ++ inventory) curGS
-				(Just (Open itm), _) -> tryOpen itm locationObjects inventory curGS
+				Left [] -> ReadUserInput
+				Left str -> PrintMessage str
+				Right New -> StartNewGame
+				Right (Quit str) -> QuitGame str
+				Right (Walk dir) -> tryWalk currentLocation dir curGS
+				Right Inventory -> PrintMessage (showInventory inventory)
+				Right Look -> PrintMessage (lookAround currentLocation)
+				Right (Examine itm) -> tryExamineItem itm (locationObjects ++ inventory)
+				Right (Take itm) -> tryTake itm locationObjects curGS
+				Right (TakeS str) -> tryTakeS str locationObjects curGS
+				Right Help -> PrintMessage helpMessage
+				Right (Weld itm1 itm2) -> tryWeld itm1 itm2 (locationObjects ++ inventory) curGS
+				Right (Open itm) -> tryOpen itm locationObjects inventory curGS
 			Just (QualifyPickup objects) -> tryTakeS inputStr objects curGS
 			Just (QualifyOpen objects) -> tryOpenS inputStr objects curGS
 
