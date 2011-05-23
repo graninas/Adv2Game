@@ -2,6 +2,7 @@ module Locations where
 
 import Types
 import Objects
+import qualified Data.Map as M
 
 --- Data functions ---
 
@@ -29,6 +30,12 @@ locationObjects' room = case room of
 	NorthRoom -> map object [homeUmbrella2]
 	_ -> []
 	
+initialLocations = M.fromList [
+					(InventoryRoom, location InventoryRoom)
+					(SouthRoom, location SouthRoom),
+					(NorthRoom, location NorthRoom)]
+initialLocation = 
+	
 ----------------------
 	
 	
@@ -36,8 +43,6 @@ location :: Room -> Location
 location room = Location {
 							locRoom = room,
 							locPaths = locationPaths' room,
-							locShortDescription = locationShortDesc' room,
-							locLongDescription = locationLongDesc' room,
 							locObjects = locationObjects' room,
 							locLongDescribed = False
 							}

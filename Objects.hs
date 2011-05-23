@@ -6,64 +6,55 @@ import Text.Printf(printf)
 
 
 --- Data functions ---
+homePhone1 = Object "Digital Phone" NoRoom
+homePhone2 = Object "Broken Phone" NoRoom
+homeTable = Object "Table" NoRoom
+homeUmbrella1 = Object "Red Umbrella" NoRoom
+homeUmbrella2 = Object "Blue Umbrella" NoRoom
+rope = Object "Rope" NoRoom
+homeHook = Object "Hook" NoRoom
+ropeOnHook = Complex "Rope on hook" rope homeHook NoRoom
+homeLighter = Object "Lighter" NoRoom
+homeDiary = Object "Diary" NoRoom
+homeDrawer = Container "Drawer" Closed [homeDiary, homeLighter] NoRoom
 
-homePhone = ("Digital Phone", Phone)
-homePhone2 = ("Broken Phone", Phone)
-homeTable = ("Table", Table)
-homeUmbrella1 = ("Red Umbrella", Umbrella)
-homeUmbrella2 = ("Blue Umbrella", Umbrella)
-homeDrawer = ("Drawer", Drawer)
-rope = ("Rope", Rope)
-homeHook = ("Hook", Hook)
-ropeOnHook = ("Rope on hook", Combined Rope Hook)
-homeLighter = ("Lighter", Lighter)
-homeDiary = ("Diary", Diary)
+objectDescription' :: Object -> String
+objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
+						| obj == homeUmbrella2 = "Nice blue Umbrella."
+						| obj == homePhone1 = "The Phone has some voice messages for you."
+						| obj == homePhone2 = "Broken electric phone."
+						| obj == rope = "Good 30 meters rope."
+						| obj == homeHook = "Massive steel hook nailed to wall."
+						| obj == homeTable = "Good wooden table with drawer."
+						| obj == homeDiary = "Your diary."
+						| obj == ropeOnHook = "Rope on hook looks tight."
+						| otherwise = printf "There is nothing special about %s." (showObject obj)
 
-objectLighter = Object (snd homeLighter) (fst homeLighter) NotContainer []
-objectDiary = Object (snd homeDiary) (fst homeDiary) NotContainer []
-objectDrawer = Object (snd homeDrawer) (fst homeDrawer) Closed [objectLighter, objectDiary]
-
-objectDescription' :: ObjectName -> String
-objectDescription' objName
-	| objName == fst homeUmbrella1 = "Nice red mechanic Umbrella."
-	| objName == fst homeUmbrella2 = "Nice blue Umbrella."
-	| objName == fst homePhone = "The Phone has some voice messages for you."
-	| objName == fst homePhone2 = "Broken electric phone."
-	| objName == fst rope = "Good 30 meters rope."
-	| objName == fst homeHook = "Massive steel hook nailed to wall."
-	| objName == fst ropeOnHook = "Rope on hook looks tight."
-	| otherwise = printf "There is nothing special about %s." objName
-
-objectPickupFailMessage' :: ObjectName -> String
-objectPickupFailMessage' objName
-	| objName == fst homePhone = "Phone drawes a wires and strikes against the table!"
-	| otherwise = printf "You can't take a %s." objName
+objectPickupFailMessage' :: Object -> String
+objectPickupFailMessage' obj | obj == homePhone1 = "Phone drawes a wires and strikes against the table!"
+							 | otherwise = printf "You can't take a %s." (showObject obj)
 
 isPickupable :: Object -> Bool
-isPickupable obj = (objectName obj, objectItem obj) `elem` [homeUmbrella1, rope]
+isPickupable obj = obj `elem` [homeUmbrella1, rope]
 
 weld :: Object -> Object -> (Maybe Object, String)
-weld o1 o2
-	| objectName o1 == fst rope && objectName o2 == fst homeHook = (Just $ object ropeOnHook, "You successfully tied rope to the hook.")
-	| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject o1) (showObject o2))
+weld obj1 obj2  | obj1 == rope && obj2 == homeHook = (Just $ ropeOnHook, "You successfully tied rope to the hook.")
+				| obj2 == rope && obj1 == homeHook = weld rope homeHook
+				| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject obj1) (showObject obj2))
 
 ----------------------
 
-object :: ObjectIdentifier -> Object
-object objID = Object (snd objID) (fst objID) NotContainer []
-
 isContainer :: Object -> Bool
-isContainer (Object _ _ contState _)
-	| contState /= NotContainer =  True
-	| otherwise = False
+isContainer (Container _ _ _ _) = True
+isContainer _ = False
 
 readObject :: String -> Objects -> Objects
 readObject [] _ = []
 readObject _ [] = []
-readObject s objects = filter (\x -> (capitalizedOName x) == capitalizedS) objects
-	where
-		capitalizedS = capitalize s
-		capitalizedOName = capitalize . objectName
+readObject str (o:os) = let readObject' (x:xs) oNs = (any (== x) oNs) || readObject' xs oNs
+						in case readObject' (words str) ((words . objectName) o) of
+							True -> o : readObject str os
+							False -> readObject str os
 
 parseObject :: String -> Objects -> Either String Object
 parseObject _ [] = Left "No objects to match."
@@ -77,23 +68,23 @@ parseObject str objects = case readObject str objects of
 							(y:[]) -> Right y
 							(ys) -> Left $ describeObjects "Ambiguous objects: " ys
 
--- Позволяет сравнивать объекты по их частичному совпадению.
-isItemsEquivalent :: Item -> Item -> Bool
-Combined x1 x2 `isItemsEquivalent` y = x1 == y || x2 == y
-x `isItemsEquivalent` Combined y1 y2 = y1 == x || y2 == x
-x `isItemsEquivalent` y = x == y
+-- Функция эквивалентности. Позволяет сравнивать объекты по их частичному совпадению.
+(=|=) :: Object -> Object -> Bool
+Complex _ x1 x2 _ =|= o@(Object _ _) = x1 == o || x2 == o
+o@(Object _ _) =|= Complex _ y1 y2 _ = y1 == o || y2 == o
+x =|= y = x == y
 
-matchedObjects :: Item -> Objects -> Objects
+matchedObjects :: Object -> Objects -> Objects
 matchedObjects _ [] = []
-matchedObjects itm objects = filter (\x -> isItemsEquivalent (objectItem x) itm) objects
+matchedObjects obj objects = filter (=|= obj) objects
 
 updateObjects :: Object -> Objects -> Objects
 updateObjects obj objects = obj : [newObj | newObj <- objects, newObj /= obj]
 
 ----------- Messages, Errors ------------
 
-notVisibleObjectError :: Item -> String
-notVisibleObjectError item = printf "You don't see any %s here." (show item)
+notVisibleObjectError :: Object -> String
+notVisibleObjectError obj = printf "You don't see any %s here." (showObject obj)
 
 cannotBeOpenedError :: Object -> String
 cannotBeOpenedError obj = printf "The %s cannot be opened." (showObject obj)
@@ -101,17 +92,17 @@ cannotBeOpenedError obj = printf "The %s cannot be opened." (showObject obj)
 cannotBeClosedError :: Object -> String
 cannotBeClosedError obj = printf "The %s cannot be closed." (showObject obj)
 
-alreadyOpenedError :: Object -> String
-alreadyOpenedError obj = printf "%s already opened." (showObject obj)
+alreadyOpenError :: Object -> String
+alreadyOpenError obj = printf "%s already opened." (showObject obj)
 
-alreadyClosedError :: Object -> String
-alreadyClosedError obj = printf "%s already closed." (showObject obj)
+alreadyCloseError :: Object -> String
+alreadyCloseError obj = printf "%s already closed." (showObject obj)
 
 successPickupingObjectMsg :: Object -> String
 successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
 
 failurePickupingObjectMsg :: Object -> String
-failurePickupingObjectMsg = objectPickupFailMessage' . objectName
+failurePickupingObjectMsg = objectPickupFailMessage'
 
 successOpeningObjectMsg :: Object -> Objects -> String
 successOpeningObjectMsg obj [] = "Opened."
@@ -119,21 +110,15 @@ successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject
 successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: " (showObject obj)) os
 
 instance Openable Object where
-	open obj = case objectContainerState obj of
-		Opened -> Left $ alreadyOpenedError obj
-		Closed -> Right $ obj {objectContainerState = Opened}
-		NotContainer -> Left $ cannotBeOpenedError obj
-	close obj = case objectContainerState obj of
-		Opened -> Right $ obj {objectContainerState = Opened}
-		Closed -> Left $ alreadyClosedError obj
-		NotContainer -> Left $ cannotBeClosedError obj
-	isOpened = (== Opened) . objectContainerState
-	isClosed = (== Closed) . objectContainerState
-	showStated o@(Object _ _ Opened _) = "(opened) " ++ showObject o
-	showStated o@(Object _ _ Closed _) = "" ++ showObject o
-	showStated o@(Object _ _ NotContainer _) = showObject o
-	showContents o@(Object _ _ Opened []) = []
-	showContents o@(Object _ _ Opened xs) = describeObjects (printf "\nThe %s contains " (showObject o)) xs
+	open obj@(Container _ Opened _ _) = Left  $ alreadyOpenError obj
+	open obj@(Container _ Closed _ _) = Right $ obj {objectContainerState = Opened}
+	open obj = Left $ cannotBeOpenedError obj
+	close obj@(Container _ Opened _ _) = Right $ obj {objectContainerState = Closed}
+	close obj@(Container _ Closed _ _) = Left $ alreadyCloseError obj
+	close obj = Left $ cannotBeClosedError obj
+	showStated obj@(Container _ Opened _ _) = "(opened) " ++ showObject obj
+	showStated obj = showObject obj
+	showContents obj@(Container _ Opened cont@(x:xs) _) = describeObjects (printf "\nThe %s contains " (showObject obj)) cont
 	showContents _ = []
 
 ----------------------- Функции отображения объекта и списка объектов. ---------------------------
@@ -180,11 +165,12 @@ describeObjects str os = (showObjects ([], str) standartObjectShowingF standartB
 
 -- Показывает особые свойства объектов (если они есть).
 investigateObjects :: IntroString -> Objects -> String
-investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (objectDescription'. objectName $ x)), \_ -> 0, 0) ["","",""]
+investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (objectDescription' x)), \_ -> 0, 0) ["","",""]
 
 -- Перечисляет объекты инвентаря в виде [списка]. Если инвентарь пуст, так и сообщает.
-showInventory :: Inventory -> String
-showInventory = showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs
+showInventory :: Object -> String
+showInventory (Container _ _ contents InventoryRoom) =  showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs contents
+showInventory _ = []
 
 -- Перечисляет объекты в виде пронумерованного списка, начинающегося с 0.
 enumerateObjects :: IntroString -> Objects -> String

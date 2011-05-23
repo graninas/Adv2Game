@@ -9,8 +9,8 @@ import Text.Printf(printf)
 
 initGameState :: GameState
 initGameState = GameState {
-	gsLocations = map location [SouthRoom, NorthRoom],
-	gsCurrentLocation = location SouthRoom,
+	gsLocations = initialLocations
+	gsCurrentLocation = initialLocation
 	gsInventory = []
 }
 
