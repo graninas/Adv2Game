@@ -44,7 +44,7 @@ tryTake :: Object -> GameState -> GameAction
 tryTake obj curGS = let objects = gsObjects curGS
 					 in case pickup obj of
 						(Just newObj, msg) -> do
-							newOs <- updateObjects newObj objects
+							newOs <- replaceObject newObj objects
 							SaveState curGS {gsObjects = newOs} msg
 						(Nothing, msg) -> PrintMessage msg
 
@@ -53,35 +53,21 @@ tryTake obj curGS = let objects = gsObjects curGS
 applyWeld :: Object -> Object -> Object -> GameState -> (String, GameState)
 applyWeld o1 o2 weldedO curGS =
 		let
-			curLoc = gsCurrentLocation curGS
-			inv = gsInventory curGS
-			clearedLoc = removeObjectListFromLocation curLoc [o1, o2]
-			maybeLocAndInv = pickup weldedO clearedLoc inv
-			(msg, updatedLocs, updatedInv, updatedCurLoc) = case maybeLocAndInv of
-				(Just (loc, newInv), _) -> ("\n" ++ showObject weldedO ++ " added to your Inventory.",
-										updateGsLocations clearedLoc curGS,
-										newInv, clearedLoc)
-				(Nothing, _) -> ("", updateGsLocations (addObjectToLocation clearedLoc weldedO) curGS, inv, addObjectToLocation clearedLoc weldedO)
-		in (msg, curGS {gsCurrentLocation = updatedCurLoc, gsLocations = updatedLocs, gsInventory = updatedInv})
+			curRoom = gsCurrentRoom curGS
+			objects = gsObjects curGS
+			(maybePickedUp, _) = pickup weldedO
+			weldedInCurrentRoom = weldedO {objectRoom = curRoom}
+			newO1 = o1 {objectRoom = NoRoom}
+			newO2 = o2 {objectRoom = NoRoom}
+			(msg, updatedObjects) =
+				case maybePickedUp of
+					Just newObj -> (printf "\n%s added to your Inventory." (showObject newObj),
+									replaceObjectList [newObj, newO1, newO2] objects)
+					Nothing -> ("", replaceObjectList [weldedInCurrentRoom, newO1, newO2] objects)
+		in (msg, curGS {gsObjects = updatedObjects})
 
-tryWeld :: Item -> Item -> Objects -> GameState -> GameAction
-tryWeld item1 item2 fromObjects curGS =
-		let
-			matched1 = matchedObjects item1 fromObjects
-			matched2 = matchedObjects item2 fromObjects
-			tooMany i os = PrintMessage (describeObjects (printf "Too many matches of %s: " (show i)) os)
-		in
-		case matched1 of
-			[] -> PrintMessage $ notVisibleObjectError $ item1
-			(x:[]) -> case matched2 of
-					[] -> PrintMessage $ notVisibleObjectError $ item2
-					(y:[]) -> case weld x y of
-						(Just obj, str) ->
-								let (applyMsg, newGS) = applyWeld x y obj curGS
-								in SaveState newGS (str ++ applyMsg)
-						(Nothing, str) ->  PrintMessage str
-					(ys) -> tooMany item2 matched2
-			(xs) -> tooMany item1 matched1
+tryWeld :: Object -> Object -> GameState -> GameAction
+tryWeld obj1 obj2 curGS = case weld
 
 
 applyOpenedObject newObj loc locs inv = let

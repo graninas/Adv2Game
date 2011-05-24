@@ -12,6 +12,8 @@ type LongDescribedRooms = Rooms
 data Direction = North | South | West | East | NoDirection
 	deriving (Eq, Show, Read)
 
+type Directions = [Direction]
+
 data OpenCloseState = Opened | Closed
 	deriving (Eq, Show, Read)
 
@@ -35,9 +37,11 @@ data Object =
 			objectRoom :: Room
 		}
 		deriving (Show, Read, Eq)
-
+	
 type Objects = [Object]
-type Directions = [Direction]
+type Components = Objects
+type WeldedObject = Maybe (Object, String)
+type Welder = Components -> WeldedObject
 
 data Path = Path {
     pathDirection :: Direction,

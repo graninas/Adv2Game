@@ -3,6 +3,7 @@ module Objects where
 import Types
 import Tools
 import Text.Printf(printf)
+import qualified Data.List as L
 
 
 --- Data functions ---
@@ -33,8 +34,6 @@ objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
 objectPickupFailMessage' :: Object -> String
 objectPickupFailMessage' obj | obj == homePhone1 = "Phone drawes a wires and strikes against the table!"
 							 | otherwise = printf "You can't take a %s." (showObject obj)
-							 
-objectWeldSuccessMessage obj | obj == ropeOnHook = "You successfully tied rope to the hook."
 
 isPickupable :: Object -> Bool
 isPickupable obj = obj `elem` [homeUmbrella1, rope]
@@ -79,8 +78,12 @@ matchedObjects :: Object -> Objects -> Objects
 matchedObjects _ [] = []
 matchedObjects obj objects = filter (=|= obj) objects
 
-updateObjects :: Object -> Objects -> Objects
-updateObjects obj objects = obj : [newObj | newObj <- objects, newObj /= obj]
+replaceObject :: Object -> Objects -> Objects
+replaceObject obj objects = obj : [newObj | newObj <- objects, newObj /= obj]
+replaceObjectList :: Objects -> Objects -> Objects
+replaceObjectList [] _ = []
+replaceObjectList _ [] = []
+replaceObjectList (n:ns) objects = replaceObjectList ns (replaceObject n objects)
 
 pickup :: Object -> (Maybe Object, String)
 pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventoryError obj)
@@ -88,19 +91,32 @@ pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventor
 					True -> (Just (obj {objectRoom = InventoryRoom}), successPickupingObjectMsg obj)
 					False -> (Nothing, failurePickupingObjectMsg obj)
 
-type Components = [Object]
-type Welder = Components -> Maybe Object
+wld1 (obj1:obj2:[]) | obj1 == rope && obj2 == homeHook = Just (ropeOnHook, "You successfully tied rope to the hook.")
+wld1 _ = Nothing
+
+-- Список комбинаторов объектов.
+welders :: [Welder]
+welders = [wld1]
+
+-- w1 [1]  -?-> w1 [2] -?-> w1[3]  ...
+-- Nothing ---> Just x ---> Just x ...
+{-
+(<||>) :: Welder -> Welder -> Welder
+w1 <||> w2 = \os -> case w1 os of
+						Just x -> Just x
+						Nothing -> Nothing
+-}
+
 (<|>) :: Welder -> Welder -> Welder
-w1 <|> w2 = \os -> case w1 os of
-				Just weldedO -> Just weldedO
-				Nothing -> w2 os
+w1 <|> w2 = \os -> let perm = L.permutations os
+				   in case filter (/= Nothing) (map w1 perm) of
+					[] -> case filter (/= Nothing) (map w2 perm) of
+							[] -> Nothing
+							(x:_) -> x
+					(y:_) -> y
 					
-weld :: Object -> Object -> (Maybe Object, String)
-weld obj1 obj2  | isCombinable obj1 obj2 = (Just combined, str)
-				| obj2 == rope && obj1 == homeHook = weld rope homeHook
-				| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject obj1) (showObject obj2))
-	where
-		(combined, str) = undefined
+weld :: Object -> Object -> WeldedObject
+weld o1 o2 = (foldr1 (<|>) welders) [o1, o2]
 
 ----------- Messages, Errors ------------
 
