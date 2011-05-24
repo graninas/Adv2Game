@@ -50,7 +50,7 @@ data Location = Location {
 	locRoom :: Room,
 	locPaths :: Paths,
 	locLongDescribed :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Show, Read)
 
 type Locations = M.Map Room Location
 	

@@ -9,59 +9,44 @@ import Text.Printf(printf)
 
 initGameState :: GameState
 initGameState = GameState {
-	gsLocations = initialLocations
-	gsCurrentLocation = initialLocation
-	gsInventory = []
+	gsLocations = initialLocations,
+	gsCurrentRoom = initialRoom,
+	gsObjects = initialObjects
 }
 
 updateGsLocations :: Location -> GameState -> Locations
 updateGsLocations newLoc (GameState locs _ _) = updateLocations newLoc locs
 
-tryExamineItem :: Item -> Objects -> GameAction
-tryExamineItem itm fromObjects = let matched = matchedObjects itm fromObjects in
-									case matched of
-										[] -> PrintMessage (notVisibleObjectError itm)
-										(x:[]) -> PrintMessage (objectDescription' . objectName $ x) -- Просто печатаем описание.
-										(xs) -> PrintMessage (investigateObjects "You look fixedly at objects." matched)
+tryExamineObject :: Object -> GameAction
+tryExamineObject obj = PrintMessage (objectDescription' obj)
 
-tryWalk' :: Location -> Direction -> Locations -> Maybe Location
-tryWalk' (Location _ paths _ _ _ _) toDir locs = getPathOnDirection paths toDir >>= \x -> getLocation (pathRoom x) locs
+tryWalk' :: Location -> Direction -> Locations -> Maybe Room
+tryWalk' (Location _ paths _ _ _ _) toDir locs = getPathOnDirection paths toDir >>= pathRoom
 
 tryWalk :: Location -> Direction -> GameState -> GameAction
-tryWalk fromLoc toDir curGS = case tryWalk' fromLoc toDir (gsLocations curGS) of
+tryWalk fromLoc toDir curGS@(GameState locs _ objects) = case tryWalk' fromLoc toDir locs of
 						Nothing -> PrintMessage (failureWalkingMsg toDir)
-						Just walkedLoc -> SaveState newGS (successWalkingMsg (locRoom walkedLoc) toDir ++ "\n" ++ newLocDescr)
+						Just room -> SaveState newGS (successWalkingMsg room toDir ++ "\n" ++ newLocDescr)
 							where
-								(newLocDescr, maybeUpdatedLoc) = describeLocation walkedLoc (locObjects walkedLoc)
-								newGS = curGS {gsCurrentLocation = newLoc, gsLocations = updatedLocs}
+								walkedLoc = getLocation room locs
+								(newLocDescr, maybeUpdatedLoc) = describeLocation walkedLoc objects
+								newGS = curGS {gsCurrentRoom = room, gsLocations = updatedLocs}
 								newLoc = walkedLoc {locLongDescribed = True}
 								updatedLocs = updateGsLocations newLoc curGS
 
 
 tryTakeS :: String -> Objects -> GameState -> GameAction
 tryTakeS str objects curGS = case parseObject str objects of
-							Right obj -> tryTake' obj curGS
+							Right obj -> tryTake obj curGS
 							Left str -> PrintMessage str
 
-pickup :: Object -> Location -> Inventory -> (Maybe (Location, Inventory), String)
-pickup obj loc inv = case isPickupable obj of
-						True -> (Just (removeObjectFromLocation loc obj, obj : inv), successPickupingObjectMsg obj)
-						False -> (Nothing, failurePickupingObjectMsg obj)
-
-tryTake' :: Object -> GameState -> GameAction
-tryTake' obj curGS = let
-						loc = gsCurrentLocation curGS
-						inv = gsInventory curGS
-					in case pickup obj loc inv of
-						(Just (newLoc, newInv), msg) -> SaveState curGS {gsCurrentLocation = newLoc, gsLocations = updateGsLocations newLoc curGS, gsInventory = newInv} msg
+tryTake :: Object -> GameState -> GameAction
+tryTake obj curGS = let objects = gsObjects curGS
+					 in case pickup obj of
+						(Just newObj, msg) -> do
+							newOs <- updateObjects newObj objects
+							SaveState curGS {gsObjects = newOs} msg
 						(Nothing, msg) -> PrintMessage msg
-
-tryTake :: Item -> Objects -> GameState -> GameAction
-tryTake itm fromObjects curGS = let matched = matchedObjects itm fromObjects in
-									case matched of
-										[] -> PrintMessage (notVisibleObjectError itm)
-										(x:[]) -> tryTake' x curGS
-										(xs) -> ReadMessagedUserInput (enumerateObjects "What object of these variants: " xs) (QualifyPickup matched)
 
 -- "Применяет" результат команды Weld. Если новый объект можно взять, он добавляется в Инвентарь, если взять нельзя, остается в локации.
 -- Два других объекта удаляются из локации.

@@ -33,14 +33,15 @@ objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
 objectPickupFailMessage' :: Object -> String
 objectPickupFailMessage' obj | obj == homePhone1 = "Phone drawes a wires and strikes against the table!"
 							 | otherwise = printf "You can't take a %s." (showObject obj)
+							 
+objectWeldSuccessMessage obj | obj == ropeOnHook = "You successfully tied rope to the hook."
 
 isPickupable :: Object -> Bool
 isPickupable obj = obj `elem` [homeUmbrella1, rope]
 
-weld :: Object -> Object -> (Maybe Object, String)
-weld obj1 obj2  | obj1 == rope && obj2 == homeHook = (Just $ ropeOnHook, "You successfully tied rope to the hook.")
-				| obj2 == rope && obj1 == homeHook = weld rope homeHook
-				| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject obj1) (showObject obj2))
+isCombinable :: Object -> Object -> Bool
+isCombinable obj1 obj2 | obj1 == rope && obj2 == homeHook = True
+isCombinable obj1 obj2 | obj2 == rope && obj1 == homeHook = True
 
 ----------------------
 
@@ -81,28 +82,37 @@ matchedObjects obj objects = filter (=|= obj) objects
 updateObjects :: Object -> Objects -> Objects
 updateObjects obj objects = obj : [newObj | newObj <- objects, newObj /= obj]
 
+pickup :: Object -> (Maybe Object, String)
+pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventoryError obj)
+		   | otherwise = case isPickupable obj of
+					True -> (Just (obj {objectRoom = InventoryRoom}), successPickupingObjectMsg obj)
+					False -> (Nothing, failurePickupingObjectMsg obj)
+
+type Components = [Object]
+type Welder = Components -> Maybe Object
+(<|>) :: Welder -> Welder -> Welder
+w1 <|> w2 = \os -> case w1 os of
+				Just weldedO -> Just weldedO
+				Nothing -> w2 os
+					
+weld :: Object -> Object -> (Maybe Object, String)
+weld obj1 obj2  | isCombinable obj1 obj2 = (Just combined, str)
+				| obj2 == rope && obj1 == homeHook = weld rope homeHook
+				| otherwise = (Nothing, printf "You can't weld %s to %s." (showObject obj1) (showObject obj2))
+	where
+		(combined, str) = undefined
+
 ----------- Messages, Errors ------------
 
-notVisibleObjectError :: Object -> String
-notVisibleObjectError obj = printf "You don't see any %s here." (showObject obj)
-
-cannotBeOpenedError :: Object -> String
-cannotBeOpenedError obj = printf "The %s cannot be opened." (showObject obj)
-
-cannotBeClosedError :: Object -> String
-cannotBeClosedError obj = printf "The %s cannot be closed." (showObject obj)
-
-alreadyOpenError :: Object -> String
-alreadyOpenError obj = printf "%s already opened." (showObject obj)
-
-alreadyCloseError :: Object -> String
-alreadyCloseError obj = printf "%s already closed." (showObject obj)
-
-successPickupingObjectMsg :: Object -> String
-successPickupingObjectMsg obj = showObject obj ++ " added to your inventory."
-
-failurePickupingObjectMsg :: Object -> String
-failurePickupingObjectMsg = objectPickupFailMessage'
+-- f :: Object -> String
+notVisibleObjectError         obj = printf "You don't see any %s here." (showObject obj)
+cannotBeOpenedError           obj = printf "The %s cannot be opened." (showObject obj)
+cannotBeClosedError           obj = printf "The %s cannot be closed." (showObject obj)
+alreadyOpenError              obj = printf "%s already opened." (showObject obj)
+alreadyCloseError             obj = printf "%s already closed." (showObject obj)
+successPickupingObjectMsg     obj = printf "%s added to your inventory." (showObject obj)
+failurePickupingObjectMsg         = objectPickupFailMessage'
+objectAlreadyInInventoryError obj = printf "You already have a %s." (showObject obj)
 
 successOpeningObjectMsg :: Object -> Objects -> String
 successOpeningObjectMsg obj [] = "Opened."
