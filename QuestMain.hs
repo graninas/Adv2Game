@@ -30,51 +30,6 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"", "Here <Item> is object's simple name.",
 	"For example: 'Phone' is object's simple name.",
 	"Input is case insensitive."]
-{-
-			Walk Direction
-			| Look
-			| Examine Object
-			| Inventory
-			| Take Object
-			| Weld Object Object
-			| Open Object
-			| New
-			| Quit String
-			| Help
--}
-
-
-type Parser a = [String] -> Maybe a
-
-(<<|>>) :: Parser a -> Parser a -> Parser a
-p1 <<|>> p2 = \ss ->
-	case p1 ss of
-		Nothing -> p2 ss
-		Just x -> Just x
-
-
-
-
-lookP :: Parser Command
-lookP ("Look":_) = Just Look
-lookP _ = Nothing
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

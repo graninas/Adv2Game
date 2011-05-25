@@ -3,8 +3,48 @@ module GameAction where
 import Types
 import Locations
 import Objects
-
 import Text.Printf(printf)
+
+------------------------------ Парсинг команды ---------------------------------
+{-
+			Walk Direction
+			| Look
+			| Examine ObjectName
+			| Inventory
+			| Take ObjectName
+			| Weld ObjectName ObjectName
+			| Open ObjectName
+			| New
+			| Quit String
+			| Help
+-}
+type Parser a = [String] -> Maybe a
+
+-- Параллельная композиция парсеров
+(<<|>>) :: Parser a -> Parser a -> Parser a
+p1 <<|>> p2 = \ss ->
+	case p1 ss of
+		Nothing -> p2 ss
+		Just x -> Just x
+
+lookP :: Parser Command
+lookP ("Look":_) = Just Look
+lookP ("L":_) = Just Look
+lookP _ = Nothing
+
+helpP :: Parser Command
+helpP ("Help":_) = Just Help
+helpP ("H":_) = Just Help
+helpP _ = Nothing
+
+openObjectP :: Parser Command
+openObjectP ("Open":oName:_) = Just $ Open oName
+openObjectP ("O":oName:_) = Just $ Open oName
+openObjectP _ = Nothing
+
+--------------------------------------------------------------------
+
+
 
 initGameState :: GameState
 initGameState = GameState {
@@ -72,14 +112,14 @@ look' curGS = undefined
 tryWalk' :: Direction -> GameState -> GameAction
 tryWalk' dir curGS = undefined
 
-tryTake' :: Object -> GameState -> GameAction
+tryTake' :: ObjectName -> GameState -> GameAction
 tryTake' obj curGS = undefined
 
-tryWeld' :: Object -> Object -> GameState -> GameAction
+tryWeld' :: ObjectName -> ObjectName -> GameState -> GameAction
 tryWeld' obj1 obj2 curGS = undefined
 
-tryOpen' :: Object -> GameState -> GameAction
+tryOpen' :: ObjectName -> GameState -> GameAction
 tryOpen' obj curGS = undefined
 
-tryExamineObject' :: Object -> GameAction
+tryExamineObject' :: ObjectName -> GameAction
 tryExamineObject' obj = undefined
