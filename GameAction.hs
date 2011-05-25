@@ -27,25 +27,23 @@ p1 <<|>> p2 = \ss ->
 		Nothing -> p2 ss
 		Just x -> Just x
 
-cmdP :: String -> [String] -> ([String] -> Command) -> Parser Command
-cmdP _ [] _ = \_ -> Nothing
-cmdP shortS (cmdS:cmdSS) cmdConstr = \(o:os) -> if (cmdS == o || shortS == o) && (length cmdSS <= length os)
+cmdP :: (String, [String], ([String] -> Command)) -> Parser Command
+cmdP (_, [], _) = \_ -> Nothing
+cmdP (shortS, (cmdS:cmdSS), cmdConstr) = \(o:os) -> if (cmdS == o || shortS == o) && (length cmdSS <= length os)
 												then Just $ cmdConstr cmdSS
 												else Nothing
 
-fP :: (String -> [String] -> ([String] -> Command)) -> String -> [String] -> ([String] -> Command)
-fP = undefined
-												
--- p :: String -> [String] -> ([String] -> Command)
-lookP "L" ["Look"] = (\_ -> Look)
-helpP "H" ["Help"] = (\_ -> Help)
-openP "O" ["Open", "oName"] = (\(x:_) -> Open x)
-examP "E" ["Examine", "oName"] = (\(x:_) -> Examine x)
-invP  "I" ["Inventory"] = (\_ -> Inventory)
-takeP "T" ["Take", "oName"] = (\(x:_) -> Take x)
-weldP "W" ["Weld", "oName", "oName"] = (\(x:y:_) -> Weld x y)
+											
+-- p :: (String, [String], ([String] -> Command))
+lookP = ("L", ["Look"], \_ -> Look)
+helpP = ("H", ["Help"], \_ -> Help)
+openP = ("O", ["Open", "oName"], \(x:_) -> Open x)
+examP = ("E", ["Examine", "oName"], \(x:_) -> Examine x)
+invP  = ("I", ["Inventory"], \_ -> Inventory)
+takeP = ("T", ["Take", "oName"], \(x:_) -> Take x)
+weldP = ("W", ["Weld", "oName", "oName"], \(x:y:_) -> Weld x y)
 
---parsers = map (cmdP . fP) [lookP, helpP, openP]
+parsers = map cmdP [lookP, helpP, openP]
 
 {-
 
