@@ -73,11 +73,11 @@ type GS a = (StateT GameState IO a)
 data Command =
 			Walk Direction
 			| Look
-			| Examine ObjectName
+			| Examine Object
 			| Inventory
-			| Take ObjectName
-			| Weld ObjectName ObjectName
-			| Open ObjectName
+			| Take Object
+			| Weld Object Object
+			| Open Object
 			| New
 			| Quit String
 			| Help

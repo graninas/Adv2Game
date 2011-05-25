@@ -1,4 +1,4 @@
-module GameState where
+module GameAction where
 
 import Types
 import Locations
@@ -25,13 +25,7 @@ tryWalk loc dir curGS@(GameState locs _ objects) =
 					(msg, newWalkedLoc) = describeLocation walkedLoc (locationObjects walkedLoc objects)
 					newLocs = updateLocations newWalkedLoc locs
 					newGS = curGS {gsLocations = newLocs, gsCurrentRoom = locRoom newWalkedLoc}
-					
 
-
-tryTakeS :: String -> Objects -> GameState -> GameAction
-tryTakeS str objects curGS = case parseObject str objects of
-							Right obj -> tryTake obj curGS
-							Left str -> PrintMessage str
 
 tryTake :: Object -> GameState -> GameAction
 tryTake obj curGS = let objects = gsObjects curGS
@@ -64,12 +58,28 @@ tryWeld obj1 obj2 curGS = case weld obj1 obj2 of
 				SaveState newGS (str ++ "\n" ++ msg)
 			Nothing -> PrintMessage (failureWeldObjectsError obj1 obj2)
 
-tryOpenS :: String -> Objects -> GameState -> GameAction
-tryOpenS str objects curGS = case parseObject str objects of
-								Right obj -> tryOpen obj curGS
-								Left str -> PrintMessage str
-
 tryOpen :: Object -> GameState -> GameAction
 tryOpen o gs@(GameState _ _ objects) = case open o of
 											(Nothing, msg) -> PrintMessage msg
 											(Just obj, msg)-> SaveState (gs {gsObjects = replaceObject obj objects}) msg
+											
+showInventory' :: GameState -> GameAction
+showInventory' curGS = undefined
+
+look' :: GameState -> GameAction
+look' curGS = undefined
+
+tryWalk' :: Direction -> GameState -> GameAction
+tryWalk' dir curGS = undefined
+
+tryTake' :: Object -> GameState -> GameAction
+tryTake' obj curGS = undefined
+
+tryWeld' :: Object -> Object -> GameState -> GameAction
+tryWeld' obj1 obj2 curGS = undefined
+
+tryOpen' :: Object -> GameState -> GameAction
+tryOpen' obj curGS = undefined
+
+tryExamineObject' :: Object -> GameAction
+tryExamineObject' obj = undefined
