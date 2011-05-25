@@ -2,6 +2,8 @@ module Locations where
 
 import Types
 import Objects
+import Paths
+import Text.Printf(printf)
 import qualified Data.Map as M
 
 --- Data functions ---
@@ -35,9 +37,24 @@ initialLocations = M.fromList [
 
 initialRoom = SouthRoom
 
-----------------------
+----------- Messages, Errors ------------
+
+successWalkingMsg :: Room -> Direction -> String
+successWalkingMsg room dir = printf "You walking %s to %s."  (show dir) (show room)
+
+failureWalkingMsg :: Direction -> String
+failureWalkingMsg dir = printf "You can't walk %s." (show dir)
+
+-----------------------------------------
+
 instance Eq Location where
 	loc1 == loc2 = locRoom loc1 == locRoom loc2
+
+walk :: Location -> Direction -> Locations -> MaybeLocation
+walk (Location _ paths _) dir locs = case pathOnDirection paths dir >>= \x -> getLocation (pathRoom x) locs of
+		Just loc -> (Just loc, successWalkingMsg (locRoom loc) dir)
+		Nothing -> (Nothing, failureWalkingMsg dir)
+					
 
 
 locationObjects :: Location -> Objects -> Objects
@@ -53,10 +70,10 @@ location room = Location {
 lookAround :: Location -> Objects -> String
 lookAround loc os = locationLongDescription' loc ++ describeObjects [] (locationObjects loc os)
 
-describeLocation :: Location -> Objects -> (String, Maybe Location)
+describeLocation :: Location -> Objects -> (String, Location)
 describeLocation loc objects = case locLongDescribed loc of
-								False -> (longDescr, Just (loc {locLongDescribed = True}))
-								True -> (shortDescr, Nothing)
+								False -> (longDescr, loc {locLongDescribed = True})
+								True -> (shortDescr, loc)
 	where
 		longDescr = (locationLongDescription' loc) ++ describeObjects [] (locationObjects loc objects)
 		shortDescr = (locationShortDescription' loc) ++ describeObjects [] (locationObjects loc objects)
@@ -65,9 +82,6 @@ describeLocation loc objects = case locLongDescribed loc of
 
 getLocation :: Room -> Locations -> Maybe Location
 getLocation = M.lookup
-
-setObjectLocation :: Object -> Location -> Object
-setObjectLocation obj loc = obj {objectRoom = locRoom loc}
 
 updateLocations :: Location -> Locations -> Locations
 updateLocations loc = M.update (\x -> if x == loc then Just loc else Nothing) (locRoom loc)

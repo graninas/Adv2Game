@@ -2,7 +2,10 @@ module Types where
 import Control.Monad (mapM_)
 import Control.Monad.State (StateT(..), MonadState(..), MonadIO(..), evalStateT)
 import qualified Data.Map as M
-							
+
+type MaybeSomething a = (Maybe a, String)
+
+
 data Room = InventoryRoom | SouthRoom | NorthRoom | Corridor | NoRoom
 	deriving (Eq, Show, Read, Ord)
 
@@ -40,8 +43,8 @@ data Object =
 	
 type Objects = [Object]
 type Components = Objects
-type WeldedObject = Maybe (Object, String)
-type Welder = Components -> WeldedObject
+type MaybeWeldedObject = Maybe (Object, String)
+type Welder = Components -> MaybeWeldedObject
 
 data Path = Path {
     pathDirection :: Direction,
@@ -57,6 +60,7 @@ data Location = Location {
 } deriving (Show, Read)
 
 type Locations = M.Map Room Location
+type MaybeLocation = MaybeSomething Location
 	
 data GameState = GameState {
 	gsLocations :: Locations,
@@ -96,7 +100,7 @@ data GameAction =
 				| StartNewGame
 				
 class Openable a where
-	open :: a -> Either String a
-	close :: a -> Either String a
+	open :: a -> MaybeSomething a
+	close :: a -> MaybeSomething a
 	showStated :: a -> String
 	showContents :: a -> String

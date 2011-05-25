@@ -2,7 +2,6 @@ module GameState where
 
 import Types
 import Locations
-import Paths
 import Objects
 
 import Text.Printf(printf)
@@ -14,25 +13,19 @@ initGameState = GameState {
 	gsObjects = initialObjects
 }
 
-updateGsLocations :: Location -> GameState -> Locations
-updateGsLocations newLoc (GameState locs _ _) = updateLocations newLoc locs
-
 tryExamineObject :: Object -> GameAction
 tryExamineObject obj = PrintMessage (objectDescription' obj)
 
-tryWalk' :: Location -> Direction -> Locations -> Maybe Room
-tryWalk' (Location _ paths _ _ _ _) toDir locs = getPathOnDirection paths toDir >>= pathRoom
-
 tryWalk :: Location -> Direction -> GameState -> GameAction
-tryWalk fromLoc toDir curGS@(GameState locs _ objects) = case tryWalk' fromLoc toDir locs of
-						Nothing -> PrintMessage (failureWalkingMsg toDir)
-						Just room -> SaveState newGS (successWalkingMsg room toDir ++ "\n" ++ newLocDescr)
-							where
-								walkedLoc = getLocation room locs
-								(newLocDescr, maybeUpdatedLoc) = describeLocation walkedLoc objects
-								newGS = curGS {gsCurrentRoom = room, gsLocations = updatedLocs}
-								newLoc = walkedLoc {locLongDescribed = True}
-								updatedLocs = updateGsLocations newLoc curGS
+tryWalk loc dir curGS@(GameState locs _ objects) =
+		case walk loc dir locs of
+			(Nothing, str) -> PrintMessage str
+			(Just walkedLoc, str) -> SaveState newGS msg
+				where
+					(msg, newWalkedLoc) = str ++ "\n" ++ (describeLocation walkedLoc (locationObjects walkedLoc))
+					newLocs = updateLocations newWalkedLoc
+					newGS = curGS {gsLocations = newLocs, gsCurrentRoom = locRomm newWalkedLoc}
+					
 
 
 tryTakeS :: String -> Objects -> GameState -> GameAction
@@ -67,33 +60,18 @@ applyWeld o1 o2 weldedO curGS =
 		in (msg, curGS {gsObjects = updatedObjects})
 
 tryWeld :: Object -> Object -> GameState -> GameAction
-tryWeld obj1 obj2 curGS = case weld
-
-
-applyOpenedObject newObj loc locs inv = let
-								newLoc = loc {locObjects = updateObjects newObj (locObjects loc)} -- Подменяем один объект из списка объектов новым объектом.
-								newLocs = updateLocations newLoc locs -- Подменяем одну локацию из списка локаций новой локацией.
-								newInv = updateObjects newObj inv
-							 in (newLoc, newLocs, newInv)
+tryWeld obj1 obj2 curGS = case weld obj1 obj2 of
+			Just newObj -> do
+				(str, newGS) <- applyWeld obj1 obj2 newObj curGS
+				SaveState newGS str
+			Nothing -> PrintMessage (failureWeldObjectsError obj1 obj2)
 
 tryOpenS :: String -> Objects -> GameState -> GameAction
 tryOpenS str objects curGS = case parseObject str objects of
-							Right obj -> tryOpen' obj curGS
-							Left str -> PrintMessage str
+								Right obj -> tryOpen obj curGS
+								Left str -> PrintMessage str
 
-tryOpen' :: Object -> GameState -> GameAction
-tryOpen' o gs@(GameState locs curLoc inv) =
-	case open o of
-		Left errorMsg -> PrintMessage errorMsg
-		Right newO -> let
-						(newLoc, newLocs, newInv) = applyOpenedObject newO curLoc locs inv
-						newState = gs {gsLocations = newLocs, gsCurrentLocation = newLoc, gsInventory = newInv}
-						msg = successOpeningObjectMsg newO (objectContents newO)
-					  in SaveState newState msg
-
-tryOpen :: Item -> Objects -> Inventory -> GameState -> GameAction
-tryOpen item locObjects inv curGS = let matched = matchedObjects item (locObjects ++ inv) in
-		case matched of
-			[] -> PrintMessage (notVisibleObjectError item)
-			(x:[]) -> tryOpen' x curGS
-			(xs) -> ReadMessagedUserInput (enumerateObjects "What object you want to open: " xs) (QualifyOpen matched)
+tryOpen :: Object -> GameState -> GameAction
+tryOpen o gs@(GameState _ _ objects) = case open o of
+											(Nothing, msg) -> PrintMessage msg
+											(Just obj, msg)-> SaveState (gs {gsObjects = replaceObject obj objects}) msg

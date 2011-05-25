@@ -38,9 +38,19 @@ objectPickupFailMessage' obj | obj == homePhone1 = "Phone drawes a wires and str
 isPickupable :: Object -> Bool
 isPickupable obj = obj `elem` [homeUmbrella1, rope]
 
-isCombinable :: Object -> Object -> Bool
-isCombinable obj1 obj2 | obj1 == rope && obj2 == homeHook = True
-isCombinable obj1 obj2 | obj2 == rope && obj1 == homeHook = True
+wld1 (obj1:obj2:[]) | obj1 == rope && obj2 == homeHook = Just (ropeOnHook, "You successfully tied rope to the hook.")
+wld1 _ = Nothing
+
+welders :: [Welder]
+welders = [wld1]
+
+(<|>) :: Welder -> Welder -> Welder
+w1 <|> w2 = \os -> let perm = L.permutations os in
+					case filter (/= Nothing) (map w1 perm) of
+						[] -> case filter (/= Nothing) (map w2 perm) of
+							[] -> Nothing
+							(x:_) -> x
+						(y:_) -> y
 
 ----------------------
 
@@ -90,32 +100,8 @@ pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventor
 		   | otherwise = case isPickupable obj of
 					True -> (Just (obj {objectRoom = InventoryRoom}), successPickupingObjectMsg obj)
 					False -> (Nothing, failurePickupingObjectMsg obj)
-
-wld1 (obj1:obj2:[]) | obj1 == rope && obj2 == homeHook = Just (ropeOnHook, "You successfully tied rope to the hook.")
-wld1 _ = Nothing
-
--- Список комбинаторов объектов.
-welders :: [Welder]
-welders = [wld1]
-
--- w1 [1]  -?-> w1 [2] -?-> w1[3]  ...
--- Nothing ---> Just x ---> Just x ...
-{-
-(<||>) :: Welder -> Welder -> Welder
-w1 <||> w2 = \os -> case w1 os of
-						Just x -> Just x
-						Nothing -> Nothing
--}
-
-(<|>) :: Welder -> Welder -> Welder
-w1 <|> w2 = \os -> let perm = L.permutations os
-				   in case filter (/= Nothing) (map w1 perm) of
-					[] -> case filter (/= Nothing) (map w2 perm) of
-							[] -> Nothing
-							(x:_) -> x
-					(y:_) -> y
 					
-weld :: Object -> Object -> WeldedObject
+weld :: Object -> Object -> MaybeWeldedObject
 weld o1 o2 = (foldr1 (<|>) welders) [o1, o2]
 
 ----------- Messages, Errors ------------
@@ -129,6 +115,7 @@ alreadyCloseError             obj = printf "%s already closed." (showObject obj)
 successPickupingObjectMsg     obj = printf "%s added to your inventory." (showObject obj)
 failurePickupingObjectMsg         = objectPickupFailMessage'
 objectAlreadyInInventoryError obj = printf "You already have a %s." (showObject obj)
+failureWeldObjectsError o1 o2     = printf "You can't weld %s to %s." (showObject o1) (showObject o2)
 
 successOpeningObjectMsg :: Object -> Objects -> String
 successOpeningObjectMsg obj [] = "Opened."
@@ -136,12 +123,12 @@ successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject
 successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: " (showObject obj)) os
 
 instance Openable Object where
-	open obj@(Container _ Opened _ _) = Left  $ alreadyOpenError obj
-	open obj@(Container _ Closed _ _) = Right $ obj {objectContainerState = Opened}
-	open obj = Left $ cannotBeOpenedError obj
-	close obj@(Container _ Opened _ _) = Right $ obj {objectContainerState = Closed}
-	close obj@(Container _ Closed _ _) = Left $ alreadyCloseError obj
-	close obj = Left $ cannotBeClosedError obj
+	open obj@(Container _ Opened _ _) = (Nothing, alreadyOpenError obj)
+	open obj@(Container _ Closed _ _) = (Just $ obj {objectContainerState = Opened}, successOpeningObjectMsg obj (objectContents obj))
+	open obj = (Nothing, cannotBeOpenedError obj)
+	close obj@(Container _ Opened _ _) = (Just $ obj {objectContainerState = Closed}, "Closed.")
+	close obj@(Container _ Closed _ _) = (Nothing, alreadyCloseError obj)
+	close obj = (Nothing, cannotBeClosedError obj)
 	showStated obj@(Container _ Opened _ _) = "(opened) " ++ showObject obj
 	showStated obj = showObject obj
 	showContents obj@(Container _ Opened cont@(x:xs) _) = describeObjects (printf "\nThe %s contains " (showObject obj)) cont
