@@ -27,25 +27,32 @@ p1 <<|>> p2 = \ss ->
 		Nothing -> p2 ss
 		Just x -> Just x
 
-lookP :: Parser Command
-lookP ("Look":_) = Just Look
-lookP ("L":_) = Just Look
-lookP _ = Nothing
+cmdP :: String -> [String] -> ([String] -> Command) -> Parser Command
+cmdP _ [] _ = \_ -> Nothing
+cmdP shortS (cmdS:cmdSS) cmdConstr = \(o:os) -> if (cmdS == o || shortS == o) && (length cmdSS <= length os)
+												then Just $ cmdConstr cmdSS
+												else Nothing
 
-helpP :: Parser Command
-helpP ("Help":_) = Just Help
-helpP ("H":_) = Just Help
-helpP _ = Nothing
+fP :: (String -> [String] -> ([String] -> Command)) -> String -> [String] -> ([String] -> Command)
+fP = undefined
+												
+-- p :: String -> [String] -> ([String] -> Command)
+lookP "L" ["Look"] = (\_ -> Look)
+helpP "H" ["Help"] = (\_ -> Help)
+openP "O" ["Open", "oName"] = (\(x:_) -> Open x)
+examP "E" ["Examine", "oName"] = (\(x:_) -> Examine x)
+invP  "I" ["Inventory"] = (\_ -> Inventory)
+takeP "T" ["Take", "oName"] = (\(x:_) -> Take x)
+weldP "W" ["Weld", "oName", "oName"] = (\(x:y:_) -> Weld x y)
 
-openObjectP :: Parser Command
-openObjectP ("Open":oName:_) = Just $ Open oName
-openObjectP ("O":oName:_) = Just $ Open oName
-openObjectP _ = Nothing
+--parsers = map (cmdP . fP) [lookP, helpP, openP]
 
+{-
+
+parse :: String -> Maybe Command
+parse [] = Nothing
+parse str = (foldr1 (<<|>>) parsers) (words str)-}
 --------------------------------------------------------------------
-
-
-
 initGameState :: GameState
 initGameState = GameState {
 	gsLocations = initialLocations,
