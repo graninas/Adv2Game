@@ -20,11 +20,11 @@ tryWalk :: Location -> Direction -> GameState -> GameAction
 tryWalk loc dir curGS@(GameState locs _ objects) =
 		case walk loc dir locs of
 			(Nothing, str) -> PrintMessage str
-			(Just walkedLoc, str) -> SaveState newGS msg
+			(Just walkedLoc, str) -> SaveState newGS (str ++ "\n" ++ msg)
 				where
-					(msg, newWalkedLoc) = str ++ "\n" ++ (describeLocation walkedLoc (locationObjects walkedLoc))
-					newLocs = updateLocations newWalkedLoc
-					newGS = curGS {gsLocations = newLocs, gsCurrentRoom = locRomm newWalkedLoc}
+					(msg, newWalkedLoc) = describeLocation walkedLoc (locationObjects walkedLoc objects)
+					newLocs = updateLocations newWalkedLoc locs
+					newGS = curGS {gsLocations = newLocs, gsCurrentRoom = locRoom newWalkedLoc}
 					
 
 
@@ -36,9 +36,7 @@ tryTakeS str objects curGS = case parseObject str objects of
 tryTake :: Object -> GameState -> GameAction
 tryTake obj curGS = let objects = gsObjects curGS
 					 in case pickup obj of
-						(Just newObj, msg) -> do
-							newOs <- replaceObject newObj objects
-							SaveState curGS {gsObjects = newOs} msg
+						(Just newObj, msg) -> SaveState curGS {gsObjects = (replaceObject newObj objects)} msg
 						(Nothing, msg) -> PrintMessage msg
 
 -- "Применяет" результат команды Weld. Если новый объект можно взять, он добавляется в Инвентарь, если взять нельзя, остается в локации.
@@ -61,9 +59,9 @@ applyWeld o1 o2 weldedO curGS =
 
 tryWeld :: Object -> Object -> GameState -> GameAction
 tryWeld obj1 obj2 curGS = case weld obj1 obj2 of
-			Just newObj -> do
-				(str, newGS) <- applyWeld obj1 obj2 newObj curGS
-				SaveState newGS str
+			Just (newObj, str) ->
+				let (msg, newGS) = applyWeld obj1 obj2 newObj curGS in
+				SaveState newGS (str ++ "\n" ++ msg)
 			Nothing -> PrintMessage (failureWeldObjectsError obj1 obj2)
 
 tryOpenS :: String -> Objects -> GameState -> GameAction
