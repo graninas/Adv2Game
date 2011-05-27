@@ -27,8 +27,10 @@ locationLongDescription' (Location room _ _) = case room of
 	_ -> "Invalid room."
 	
 initialObjects :: Objects
-initialObjects = map (\x -> x {objectRoom = SouthRoom}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
+initialObjects = inventoryObject : 	
+				 map (\x -> x {objectRoom = SouthRoom}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
 				 map (\x -> x {objectRoom = NorthRoom}) [homePhone2]
+				 
 	
 initialLocations = M.fromList [
 					(InventoryRoom, location InventoryRoom),

@@ -35,11 +35,11 @@ goP   = ("G", ["Go", "Direction"], \(x:_) -> Go x)
 newP  = ([], ["New"], \_ -> New)
 quitP = ("Q", ["Quit"], \_ -> Quit "Be seen you...")
 
-parsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, goP, newP, quitP]
+cmdParsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, goP, newP, quitP]
 
-parse :: String -> Maybe Command
-parse [] = Nothing
-parse str = (foldr1 (<<|>>) parsers) (words . capitalize $ str)
+parseCmd :: String -> Maybe Command
+parseCmd [] = Nothing
+parseCmd str = (foldr1 (<<|>>) cmdParsers) (words . capitalize $ str)
 --------------------------------------------------------------------
 initGameState :: GameState
 initGameState = GameState {
@@ -97,12 +97,16 @@ tryOpen :: Object -> GameState -> GameAction
 tryOpen o gs@(GameState _ _ objects) = case open o of
 											(Nothing, msg) -> PrintMessage msg
 											(Just obj, msg)-> SaveState (gs {gsObjects = replaceObject obj objects}) msg
-											
+
 showInventory' :: GameState -> GameAction
-showInventory' curGS = undefined
+showInventory' (GameState _ _ objects) = case getRoomObjects InventoryRoom objects of
+			(x:_) -> PrintMessage $ showInventory x
+			[] -> PrintMessage "Some error: no Inventory object found."
 
 look' :: GameState -> GameAction
-look' curGS = PrintMessage []
+look' (GameState locs room objects) = case getLocation room locs of
+			Just loc -> PrintMessage $ lookAround loc objects
+			Nothing -> PrintMessage $ printf "Some error: no location on room %s was found." (show room)
 
 tryWalk' :: Direction -> GameState -> GameAction
 tryWalk' dir curGS = undefined

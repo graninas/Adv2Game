@@ -99,7 +99,7 @@ data GameAction =
 				| ReadMessagedUserInput InputOutputString InputCommand
 				| SaveState GameState OutputMessage
 				| StartNewGame
-				
+
 class Openable a where
 	open :: a -> MaybeSomething a
 	close :: a -> MaybeSomething a

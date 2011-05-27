@@ -18,6 +18,7 @@ ropeOnHook = Complex "Rope on hook" rope homeHook NoRoom
 homeLighter = Object "Lighter" NoRoom
 homeDiary = Object "Diary" NoRoom
 homeDrawer = Container "Drawer" Closed [homeDiary, homeLighter] NoRoom
+inventoryObject = Container "Inventory" Opened [] InventoryRoom
 
 objectDescription' :: Object -> String
 objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
@@ -104,8 +105,11 @@ pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventor
 weld :: Object -> Object -> MaybeWeldedObject
 weld o1 o2 = (foldr1 (<|>) welders) [o1, o2]
 
------------ Messages, Errors ------------
+getRoomObjects :: Room -> Objects -> [Object]
+getRoomObjects room = filter (\x -> objectRoom x == room)
 
+
+----------- Messages, Errors ------------
 -- f :: Object -> String
 notVisibleObjectError         obj = printf "You don't see any %s here." (showObject obj)
 cannotBeOpenedError           obj = printf "The %s cannot be opened." (showObject obj)

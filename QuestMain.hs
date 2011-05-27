@@ -34,7 +34,7 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []
-parseCommand str = case parse str of
+parseCommand str = case parseCmd str of
 					Just cmd -> Right cmd
 					Nothing -> Left "Can't understand a command."
 
