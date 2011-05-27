@@ -49,23 +49,9 @@ caseCmdTail doWhatMsg cmdMain cmdTail = case cmdTail of
 	
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []
-parseCommand str =
-				let
-					capStrings = capitalize $ str
-					capedWords = words capStrings
-					wordsAfterCommand = unwords . tail $ capedWords
-					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
-				in
-					case reads capStrings of
-						[(x,[])] -> Right x				-- 1 вариант, полностью распознанная команда, в остатке нет ничего.
-						_ -> case head capedWords of	-- Несколько вариантов, или есть остаток. Распознаются короткие и строковые команды
-							"Q" -> Right (Quit "Be seen you...")
-							"I" -> Right Inventory
-							"H" -> Right Help
-							"E" -> caseCmdTail "Examine what?" Examine cmdTail
-							"T" -> caseCmdTail "Take what?" Take cmdTail
-							"L" -> Right Look
-							_ -> Left "Can't understand a command."
+parseCommand str = case parse str of
+					Just cmd -> Right cmd
+					Nothing -> Right Look
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do

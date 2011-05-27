@@ -3,7 +3,9 @@ module GameAction where
 import Types
 import Locations
 import Objects
+import Tools
 import Text.Printf(printf)
+
 
 ------------------------------ Парсинг команды ---------------------------------
 {-
@@ -33,7 +35,25 @@ cmdP (shortS, (cmdS:cmdSS), cmdConstr) = \(o:os) -> if (cmdS == o || shortS == o
 												then Just $ cmdConstr cmdSS
 												else Nothing
 
-											
+{-
+
+				let
+					capStrings = capitalize $ str
+					capedWords = words capStrings
+					wordsAfterCommand = unwords . tail $ capedWords
+					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
+				in
+					case reads capStrings of
+						[(x,[])] -> Right x				-- 1 вариант, полностью распознанная команда, в остатке нет ничего.
+						_ -> case head capedWords of	-- Несколько вариантов, или есть остаток. Распознаются короткие и строковые команды
+							"Q" -> Right (Quit "Be seen you...")
+							"I" -> Right Inventory
+							"H" -> Right Help
+							"E" -> caseCmdTail "Examine what?" Examine cmdTail
+							"T" -> caseCmdTail "Take what?" Take cmdTail
+							"L" -> Right Look
+							_ -> Left "Can't understand a command."
+-}							
 -- p :: (String, [String], ([String] -> Command))
 lookP = ("L", ["Look"], \_ -> Look)
 helpP = ("H", ["Help"], \_ -> Help)
@@ -42,14 +62,15 @@ examP = ("E", ["Examine", "oName"], \(x:_) -> Examine x)
 invP  = ("I", ["Inventory"], \_ -> Inventory)
 takeP = ("T", ["Take", "oName"], \(x:_) -> Take x)
 weldP = ("W", ["Weld", "oName", "oName"], \(x:y:_) -> Weld x y)
+goP   = ("G", ["Go", "Direction"], \(x:_) -> Go x)
+newP  = ([], ["New"], \_ -> New)
+quitP = ("Q", ["Quit"], \_ -> Quit "Be seen you...")
 
-parsers = map cmdP [lookP, helpP, openP]
-
-{-
+parsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, goP, newP, quitP]
 
 parse :: String -> Maybe Command
 parse [] = Nothing
-parse str = (foldr1 (<<|>>) parsers) (words str)-}
+parse str = (foldr1 (<<|>>) parsers) (words . capitalize $ str)
 --------------------------------------------------------------------
 initGameState :: GameState
 initGameState = GameState {
@@ -112,7 +133,7 @@ showInventory' :: GameState -> GameAction
 showInventory' curGS = undefined
 
 look' :: GameState -> GameAction
-look' curGS = undefined
+look' curGS = PrintMessage []
 
 tryWalk' :: Direction -> GameState -> GameAction
 tryWalk' dir curGS = undefined
