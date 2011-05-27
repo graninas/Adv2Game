@@ -32,26 +32,11 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"Input is case insensitive."]
 
 
-
-
-
-
-	
--- Изящное решение, как передать конструктор (Pickup, Take) в другую функцию.
--- Функция принимает короткую команду и пытается найти после этой команды объекты.
--- Допускает два конструктора над короткой командой: главный (cmdMain) и альтернативный (cmdAlt).
--- Альтернативные конструкторы команд (оканчиваются на S) указывают, что объекты будут распознаны в строке где-то в другом месте.
--- Если передана только короткая команда, выдает сообщение (doWhatMsg).
-caseCmdTail :: String -> (a -> Command) -> (String, [(a, String)]) -> Either String Command
-caseCmdTail doWhatMsg cmdMain cmdTail = case cmdTail of
-			(_, [(y, "")]) -> Right (cmdMain y)
-			_ -> Left doWhatMsg
-	
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []
 parseCommand str = case parse str of
 					Just cmd -> Right cmd
-					Nothing -> Right Look
+					Nothing -> Left "Can't understand a command."
 
 run' :: InputString -> Maybe InputCommand -> GameState -> GameAction
 run' inputStr maybeInputCmd curGS = do

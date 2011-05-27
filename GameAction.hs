@@ -8,18 +8,6 @@ import Text.Printf(printf)
 
 
 ------------------------------ ѕарсинг команды ---------------------------------
-{-
-			Walk Direction
-			| Look
-			| Examine ObjectName
-			| Inventory
-			| Take ObjectName
-			| Weld ObjectName ObjectName
-			| Open ObjectName
-			| New
-			| Quit String
-			| Help
--}
 type Parser a = [String] -> Maybe a
 
 -- ѕараллельна€ композици€ парсеров
@@ -34,26 +22,7 @@ cmdP (_, [], _) = \_ -> Nothing
 cmdP (shortS, (cmdS:cmdSS), cmdConstr) = \(o:os) -> if (cmdS == o || shortS == o) && (length cmdSS <= length os)
 												then Just $ cmdConstr cmdSS
 												else Nothing
-
-{-
-
-				let
-					capStrings = capitalize $ str
-					capedWords = words capStrings
-					wordsAfterCommand = unwords . tail $ capedWords
-					cmdTail = (wordsAfterCommand, reads wordsAfterCommand)
-				in
-					case reads capStrings of
-						[(x,[])] -> Right x				-- 1 вариант, полностью распознанна€ команда, в остатке нет ничего.
-						_ -> case head capedWords of	-- Ќесколько вариантов, или есть остаток. –аспознаютс€ короткие и строковые команды
-							"Q" -> Right (Quit "Be seen you...")
-							"I" -> Right Inventory
-							"H" -> Right Help
-							"E" -> caseCmdTail "Examine what?" Examine cmdTail
-							"T" -> caseCmdTail "Take what?" Take cmdTail
-							"L" -> Right Look
-							_ -> Left "Can't understand a command."
--}							
+	
 -- p :: (String, [String], ([String] -> Command))
 lookP = ("L", ["Look"], \_ -> Look)
 helpP = ("H", ["Help"], \_ -> Help)
