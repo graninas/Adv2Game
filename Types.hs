@@ -39,7 +39,7 @@ data Object =
 			objectComponent2 :: Object,
 			objectRoom :: Room
 		}
-		deriving (Show, Read, Eq)
+		deriving (Show, Read)
 	
 type Objects = [Object]
 type Components = Objects

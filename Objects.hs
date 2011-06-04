@@ -129,6 +129,9 @@ instance Openable Object where
 	showStated obj = showObject obj
 	showContents obj@(Container _ Opened cont@(x:xs) _) = describeObjects (printf "\nThe %s contains " (showObject obj)) cont
 	showContents _ = []
+	
+instance Eq Object where
+	o1 == o2 = objectName o1 == objectName o2
 
 ----------------------- Функции отображения объекта и списка объектов. ---------------------------
 type ObjectShowPrefix = (String, String)
