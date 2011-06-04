@@ -20,7 +20,7 @@ p1 <<|>> p2 = \ss ->
 cmdP :: (String, [String], ([String] -> Command)) -> Parser Command
 cmdP (_, [], _) = \_ -> Nothing
 cmdP (shortS, (cmdS:cmdSS), cmdConstr) = \(o:os) -> if (cmdS == o || shortS == o) && (length cmdSS <= length os)
-												then Just $ cmdConstr cmdSS
+												then Just $ cmdConstr os
 												else Nothing
 	
 -- p :: (String, [String], ([String] -> Command))
@@ -39,17 +39,20 @@ cmdParsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, goP, newP
 
 parseCmd :: String -> Maybe Command
 parseCmd [] = Nothing
-parseCmd str = (foldr1 (<<|>>) cmdParsers) (words . capitalize $ str)
---------------------------------------------------------------------
-initGameState :: GameState
-initGameState = GameState {
-	gsLocations = initialLocations,
-	gsCurrentRoom = initialRoom,
-	gsObjects = initialObjects
-}
+parseCmd str = (foldr1 (<<|>>) cmdParsers) (map capitalize . words $ str)
 
-tryExamineObject :: Object -> GameAction
-tryExamineObject obj = PrintMessage (objectDescription' obj)
+---------------------------- Парсинг объекта -------------------------------
+
+parseObject :: Room -> Objects -> ObjectName -> Either String Object
+parseObject _ [] _ = Left "No objects in room."
+parseObject _ _ [] = Left "What?"
+parseObject room os oName = let roomOs = roomObjects room os in
+		case null roomOs of
+			True -> Left "No objects in room."
+			False -> case readObject oName roomOs of
+						[] -> Left $ printf "Can't parse an object %s." oName
+						(x:[]) -> Right x
+						xs -> Left $ enumerateObjects "What object of these variants: " xs
 
 tryWalk :: Location -> Direction -> GameState -> GameAction
 tryWalk loc dir curGS@(GameState locs _ objects) =
@@ -98,8 +101,11 @@ tryOpen o gs@(GameState _ _ objects) = case open o of
 											(Nothing, msg) -> PrintMessage msg
 											(Just obj, msg)-> SaveState (gs {gsObjects = replaceObject obj objects}) msg
 
+tryExamineObject :: Object -> GameAction
+tryExamineObject obj = PrintMessage (objectDescription' obj)
+
 showInventory' :: GameState -> GameAction
-showInventory' (GameState _ _ objects) = case getRoomObjects InventoryRoom objects of
+showInventory' (GameState _ _ objects) = case roomObjects InventoryRoom objects of
 			(x:_) -> PrintMessage $ showInventory x
 			[] -> PrintMessage "Some error: no Inventory object found."
 
@@ -112,13 +118,27 @@ tryWalk' :: Direction -> GameState -> GameAction
 tryWalk' dir curGS = undefined
 
 tryTake' :: ObjectName -> GameState -> GameAction
-tryTake' obj curGS = undefined
+tryTake' objN gs@(GameState _ room objects) =
+		case parseObject room objects objN of
+			Left msg -> PrintMessage msg
+			Right obj -> tryTake obj gs
 
 tryWeld' :: ObjectName -> ObjectName -> GameState -> GameAction
-tryWeld' obj1 obj2 curGS = undefined
+tryWeld' obj1N obj2N gs@(GameState _ room objects) =
+		case parseObject room objects obj1N of
+			Left msg1 -> PrintMessage msg1
+			Right obj1 -> case parseObject room objects obj1N of
+							Left msg2 -> PrintMessage msg2
+							Right obj2 -> tryWeld obj1 obj2 gs
 
 tryOpen' :: ObjectName -> GameState -> GameAction
-tryOpen' obj curGS = undefined
+tryOpen' objN gs@(GameState _ room objects) =
+		case parseObject room objects objN of
+			Left msg -> PrintMessage msg
+			Right obj -> tryOpen obj gs
 
-tryExamineObject' :: ObjectName -> GameAction
-tryExamineObject' obj = undefined
+tryExamineObject' :: ObjectName -> GameState -> GameAction
+tryExamineObject' objN (GameState _ room objects) =
+		case parseObject room objects objN of
+			Left msg -> PrintMessage msg
+			Right obj -> tryExamineObject obj

@@ -9,6 +9,7 @@ import Control.Monad.State (get, gets, StateT(..), evalStateT,
                             put, MonadState(..), liftIO)
 import Char(isDigit, isAlpha)
 import qualified System.IO.Error as SysIOError
+import qualified Data.Map as M
 
 saveGame :: GameState -> GS ()
 saveGame curGS = liftIO $(writeFile "save.a2g" (show curGS))
@@ -31,6 +32,27 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"For example: 'Phone' is object's simple name.",
 	"Input is case insensitive."]
 
+initialObjects :: Objects
+initialObjects = inventoryObject : 	
+				 map (\x -> x {objectRoom = SouthRoom}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
+				 map (\x -> x {objectRoom = NorthRoom}) [homePhone2]
+				 
+	
+initialLocations = M.fromList [
+					(InventoryRoom, location InventoryRoom),
+					(SouthRoom, location SouthRoom),
+					(NorthRoom, location NorthRoom)]
+
+initialRoom = SouthRoom
+
+initGameState :: GameState
+initGameState = GameState {
+	gsLocations = initialLocations,
+	gsCurrentRoom = initialRoom,
+	gsObjects = initialObjects
+}
+
+	
 
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []
@@ -49,7 +71,7 @@ run' inputStr maybeInputCmd curGS = do
 				Right (Walk dir) -> tryWalk' dir curGS
 				Right Inventory -> showInventory' curGS
 				Right Look -> look' curGS
-				Right (Examine obj) -> tryExamineObject' obj
+				Right (Examine obj) -> tryExamineObject' obj curGS
 				Right (Take obj) -> tryTake' obj curGS
 				Right Help -> PrintMessage helpMessage
 				Right (Weld obj1 obj2) -> tryWeld' obj1 obj2 curGS
@@ -72,7 +94,7 @@ run inputStr oldInputCmd = do
 loadGame str = case reads str of
 				[(x,"")] -> Just x
 				_ -> Nothing
-		
+
 main :: IO ()
 main = do
 	str <- catch (readFile "save.a2g") (\_ -> return [])

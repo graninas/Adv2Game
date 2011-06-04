@@ -59,25 +59,17 @@ isContainer :: Object -> Bool
 isContainer (Container _ _ _ _) = True
 isContainer _ = False
 
+readObject' :: [String] -> [String] -> Bool
+readObject' [] _ = False
+readObject' _ [] = False
+readObject' (x:xs) oNs = (any (== x) oNs) || readObject' xs oNs
+
 readObject :: String -> Objects -> Objects
 readObject [] _ = []
 readObject _ [] = []
-readObject str (o:os) = let readObject' (x:xs) oNs = (any (== x) oNs) || readObject' xs oNs
-						in case readObject' (words str) ((words . objectName) o) of
+readObject str (o:os) = case readObject' (words str) ((words . objectName) o) of
 							True -> o : readObject str os
 							False -> readObject str os
-
-parseObject :: String -> Objects -> Either String Object
-parseObject _ [] = Left "No objects to match."
-parseObject [] _ = Left "What?"
-parseObject str objects = case readObject str objects of
-							[] -> case reads str :: [(Int, String)] of
-								[(x,"")] -> case x >= 0 && x < (length objects) of
-										True -> Right (objects !! x)
-										False -> Left $ printf "Object with index %d does not exist." x
-								_ -> Left $ printf "Can't parse an object '%s'." str
-							(y:[]) -> Right y
-							(ys) -> Left $ describeObjects "Ambiguous objects: " ys
 
 -- Функция эквивалентности. Позволяет сравнивать объекты по их частичному совпадению.
 (=|=) :: Object -> Object -> Bool
@@ -105,8 +97,8 @@ pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventor
 weld :: Object -> Object -> MaybeWeldedObject
 weld o1 o2 = (foldr1 (<|>) welders) [o1, o2]
 
-getRoomObjects :: Room -> Objects -> [Object]
-getRoomObjects room = filter (\x -> objectRoom x == room)
+roomObjects :: Room -> Objects -> [Object]
+roomObjects room = filter (\x -> objectRoom x == room)
 
 
 ----------- Messages, Errors ------------

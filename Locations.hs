@@ -25,19 +25,6 @@ locationLongDescription' (Location room _ _) = case room of
 	SouthRoom -> "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. A lightnings beat to the lighthouse on a mountain."
 	NorthRoom -> "SouthRoom is the big nice place with many lamps on the walls."
 	_ -> "Invalid room."
-	
-initialObjects :: Objects
-initialObjects = inventoryObject : 	
-				 map (\x -> x {objectRoom = SouthRoom}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
-				 map (\x -> x {objectRoom = NorthRoom}) [homePhone2]
-				 
-	
-initialLocations = M.fromList [
-					(InventoryRoom, location InventoryRoom),
-					(SouthRoom, location SouthRoom),
-					(NorthRoom, location NorthRoom)]
-
-initialRoom = SouthRoom
 
 ----------- Messages, Errors ------------
 
