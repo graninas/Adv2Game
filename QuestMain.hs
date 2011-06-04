@@ -33,17 +33,17 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 	"Input is case insensitive."]
 
 initialObjects :: Objects
-initialObjects = inventoryObject : 	
-				 map (\x -> x {objectRoom = SouthRoom}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
-				 map (\x -> x {objectRoom = NorthRoom}) [homePhone2]
+initialObjects = bag : 	
+				 map (\x -> x {objectRoom = Home}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
+				 map (\x -> x {objectRoom = Friend'sYard}) [homePhone2]
 				 
 	
 initialLocations = M.fromList [
 					(InventoryRoom, location InventoryRoom),
-					(SouthRoom, location SouthRoom),
-					(NorthRoom, location NorthRoom)]
+					(Home, location Home),
+					(Friend'sYard, location Friend'sYard)]
 
-initialRoom = SouthRoom
+initialRoom = Home
 
 initGameState :: GameState
 initGameState = GameState {

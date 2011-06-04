@@ -18,7 +18,7 @@ ropeOnHook = Complex "Rope on hook" rope homeHook NoRoom
 homeLighter = Object "Lighter" NoRoom
 homeDiary = Object "Diary" NoRoom
 homeDrawer = Container "Drawer" Closed [homeDiary, homeLighter] NoRoom
-inventoryObject = Container "Inventory" Opened [] InventoryRoom
+bag = Container "Bag" Opened [] InventoryRoom
 
 objectDescription' :: Object -> String
 objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
@@ -172,6 +172,7 @@ showObjects pref lFuncDescr boundStrs xs = snd pref ++ (showLeftBracket boundStr
 
 -- Перечисляет объекты в виде [списка]. Если не передана строка Intro, будет подставлена строка по умолчанию.
 describeObjects :: IntroString -> Objects -> String
+describeObjects _ [] = "TEST."
 describeObjects [] os = (showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs os) ++ unwords(map showContents os)
 describeObjects str os = (showObjects ([], str) standartObjectShowingF standartBoundStrs os) ++ unwords(map showContents os)
 
@@ -180,9 +181,8 @@ investigateObjects :: IntroString -> Objects -> String
 investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (showObject x) (objectDescription' x)), \_ -> 0, 0) ["","",""]
 
 -- Перечисляет объекты инвентаря в виде [списка]. Если инвентарь пуст, так и сообщает.
-showInventory :: Object -> String
-showInventory (Container _ _ contents InventoryRoom) =  showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs contents
-showInventory _ = []
+showInventory :: Objects -> String
+showInventory os =  showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs os
 
 -- Перечисляет объекты в виде пронумерованного списка, начинающегося с 0.
 enumerateObjects :: IntroString -> Objects -> String

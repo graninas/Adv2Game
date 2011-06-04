@@ -6,7 +6,7 @@ import qualified Data.Map as M
 type MaybeSomething a = (Maybe a, String)
 
 
-data Room = InventoryRoom | SouthRoom | NorthRoom | Corridor | NoRoom
+data Room = InventoryRoom | Home | Friend'sYard | Corridor | NoRoom
 	deriving (Eq, Show, Read, Ord)
 
 type Rooms = [Room]

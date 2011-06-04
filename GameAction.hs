@@ -105,11 +105,10 @@ tryExamineObject :: Object -> GameAction
 tryExamineObject obj = PrintMessage (objectDescription' obj)
 
 showInventory' :: GameState -> GameAction
-showInventory' (GameState _ _ objects) = case roomObjects InventoryRoom objects of
-			(x:_) -> PrintMessage $ showInventory x
-			[] -> PrintMessage "Some error: no Inventory object found."
+showInventory' (GameState _ _ objects) = PrintMessage $ showInventory $ roomObjects InventoryRoom objects
 
 look' :: GameState -> GameAction
+look' (GameState locs room []) = PrintMessage "Wrong."
 look' (GameState locs room objects) = case getLocation room locs of
 			Just loc -> PrintMessage $ lookAround loc objects
 			Nothing -> PrintMessage $ printf "Some error: no location on room %s was found." (show room)
@@ -127,14 +126,16 @@ tryWeld' :: ObjectName -> ObjectName -> GameState -> GameAction
 tryWeld' obj1N obj2N gs@(GameState _ room objects) =
 		case parseObject room objects obj1N of
 			Left msg1 -> PrintMessage msg1
-			Right obj1 -> case parseObject room objects obj1N of
+			Right obj1 -> case parseObject room objects obj2N of
 							Left msg2 -> PrintMessage msg2
 							Right obj2 -> tryWeld obj1 obj2 gs
 
 tryOpen' :: ObjectName -> GameState -> GameAction
 tryOpen' objN gs@(GameState _ room objects) =
 		case parseObject room objects objN of
-			Left msg -> PrintMessage msg
+			Left _ -> case parseObject InventoryRoom objects objN of
+				Left msg -> PrintMessage msg
+				Right obj -> tryOpen obj gs
 			Right obj -> tryOpen obj gs
 
 tryExamineObject' :: ObjectName -> GameState -> GameAction

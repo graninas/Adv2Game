@@ -10,20 +10,20 @@ import qualified Data.Map as M
 
 locationPaths' :: Room -> Paths
 locationPaths' room = case room of
-	SouthRoom -> [Path North NorthRoom, Path South SouthRoom]
-	NorthRoom -> [Path South SouthRoom, Path West Corridor]
+	Home -> [Path North Friend'sYard, Path South Home]
+	Friend'sYard -> [Path South Home, Path West Corridor]
 	_ -> []
 
 locationShortDescription' :: Location -> String
 locationShortDescription' (Location room _ _) = case room of
-	SouthRoom -> "You are standing in the middle room at the wooden table."
-	NorthRoom -> "This is big light room."
+	Home -> "You are standing in the middle room at the wooden table."
+	Friend'sYard -> "This is big light room."
 	_ -> "Invalid room."
 
 locationLongDescription' :: Location -> String
 locationLongDescription' (Location room _ _) = case room of
-	SouthRoom -> "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. A lightnings beat to the lighthouse on a mountain."
-	NorthRoom -> "SouthRoom is the big nice place with many lamps on the walls."
+	Home -> "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. A lightnings beat to the lighthouse on a mountain."
+	Friend'sYard -> "Friend'sYard is the big nice place with many lamps on the walls."
 	_ -> "Invalid room."
 
 ----------- Messages, Errors ------------
@@ -47,7 +47,8 @@ walk (Location _ paths _) dir locs = case pathOnDirection paths dir >>= \x -> ge
 
 
 locationObjects :: Location -> Objects -> Objects
-locationObjects loc = filter (\x -> locRoom loc == objectRoom x)
+--locationObjects loc [] = undefined
+locationObjects loc os = filter (\x -> locRoom loc == objectRoom x) os
 
 location :: Room -> Location
 location room = Location {
@@ -57,6 +58,7 @@ location room = Location {
 							}
 
 lookAround :: Location -> Objects -> String
+lookAround _ [] = undefined
 lookAround loc os = locationLongDescription' loc ++ describeObjects [] (locationObjects loc os)
 
 describeLocation :: Location -> Objects -> (String, Location)
