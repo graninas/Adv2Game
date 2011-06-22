@@ -3,12 +3,11 @@ module Tools where
 
 import Char (toUpper, toLower)
 import System.IO (hFlush, stdout, IO(..))
-import Control.Monad.State ({-get, gets, StateT(..), evalStateT, 
-                            put, MonadState(..), -}liftIO, MonadIO(..))
+import Control.Monad.State (liftIO, MonadIO(..))
 import Types
 
 upString :: String -> String
-upString str = map toUpper str
+upString = map toUpper
 
 capitalize :: String -> String
 capitalize = unwords . map capitalize' . words

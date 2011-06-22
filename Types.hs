@@ -40,7 +40,7 @@ data Object =
 			objectRoom :: Room
 		}
 		deriving (Show, Read)
-	
+
 type Objects = [Object]
 type Components = Objects
 type MaybeWeldedObject = Maybe (Object, String)
@@ -61,7 +61,7 @@ data Location = Location {
 
 type Locations = M.Map Room Location
 type MaybeLocation = MaybeSomething Location
-	
+
 data GameState = GameState {
 	gsLocations :: Locations,
 	gsCurrentRoom :: Room,
@@ -83,7 +83,7 @@ data Command =
 			| Quit String
 			| Help
 	deriving (Eq, Show, Read)
-	
+
 data InputCommand =
 		QualifyPickup Objects
 		| QualifyOpen Objects

@@ -43,11 +43,8 @@ walk :: Location -> Direction -> Locations -> MaybeLocation
 walk (Location _ paths _) dir locs = case pathOnDirection paths dir >>= \x -> getLocation (pathRoom x) locs of
 		Just loc -> (Just loc, successWalkingMsg (locRoom loc) dir)
 		Nothing -> (Nothing, failureWalkingMsg dir)
-					
-
 
 locationObjects :: Location -> Objects -> Objects
---locationObjects loc [] = undefined
 locationObjects loc os = filter (\x -> locRoom loc == objectRoom x) os
 
 location :: Room -> Location
@@ -68,7 +65,7 @@ describeLocation loc objects = case locLongDescribed loc of
 	where
 		longDescr = (locationLongDescription' loc) ++ describeObjects [] (locationObjects loc objects)
 		shortDescr = (locationShortDescription' loc) ++ describeObjects [] (locationObjects loc objects)
-	
+
 ----------------------------------------------------------------------
 
 getLocation :: Room -> Locations -> Maybe Location

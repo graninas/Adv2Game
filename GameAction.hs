@@ -22,7 +22,7 @@ cmdP (_, [], _) = \_ -> Nothing
 cmdP (shortS, (cmdS:cmdSS), cmdConstr) = \(o:os) -> if (cmdS == o || shortS == o) && (length cmdSS <= length os)
 												then Just $ cmdConstr os
 												else Nothing
-	
+
 -- p :: (String, [String], ([String] -> Command))
 lookP = ("L", ["Look"], \_ -> Look)
 helpP = ("H", ["Help"], \_ -> Help)
@@ -32,7 +32,7 @@ invP  = ("I", ["Inventory"], \_ -> Inventory)
 takeP = ("T", ["Take", "oName"], \(x:_) -> Take x)
 weldP = ("W", ["Weld", "oName", "oName"], \(x:y:_) -> Weld x y)
 goP   = ("G", ["Go", "Direction"], \(x:_) -> Go x)
-newP  = ([], ["New"], \_ -> New)
+newP  = ([],  ["New"], \_ -> New)
 quitP = ("Q", ["Quit"], \_ -> Quit "Be seen you...")
 
 cmdParsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, goP, newP, quitP]
@@ -42,17 +42,12 @@ parseCmd [] = Nothing
 parseCmd str = (foldr1 (<<|>>) cmdParsers) (map capitalize . words $ str)
 
 ---------------------------- Парсинг объекта -------------------------------
-
 parseObject :: Room -> Objects -> ObjectName -> Either String Object
-parseObject _ [] _ = Left "No objects in room."
-parseObject _ _ [] = Left "What?"
-parseObject room os oName = let roomOs = roomObjects room os in
-		case null roomOs of
-			True -> Left "No objects in room."
-			False -> case readObject oName roomOs of
-						[] -> Left $ printf "Can't parse an object %s." oName
-						(x:[]) -> Right x
-						xs -> Left $ enumerateObjects "What object of these variants: " xs
+parseObject room os oName =
+		case readObject oName (roomObjects room os) of
+			[] -> Left $ printf "Can't parse an object %s." oName
+			(x:[]) -> Right x
+			xs -> Left $ enumerateObjects "What object of these variants: " xs
 
 tryWalk :: Location -> Direction -> GameState -> GameAction
 tryWalk loc dir curGS@(GameState locs _ objects) =
@@ -63,7 +58,6 @@ tryWalk loc dir curGS@(GameState locs _ objects) =
 					(msg, newWalkedLoc) = describeLocation walkedLoc (locationObjects walkedLoc objects)
 					newLocs = updateLocations newWalkedLoc locs
 					newGS = curGS {gsLocations = newLocs, gsCurrentRoom = locRoom newWalkedLoc}
-
 
 tryTake :: Object -> GameState -> GameAction
 tryTake obj curGS = let objects = gsObjects curGS
@@ -104,11 +98,14 @@ tryOpen o gs@(GameState _ _ objects) = case open o of
 tryExamineObject :: Object -> GameAction
 tryExamineObject obj = PrintMessage (objectDescription' obj)
 
+
+
+
+
 showInventory' :: GameState -> GameAction
 showInventory' (GameState _ _ objects) = PrintMessage $ showInventory $ roomObjects InventoryRoom objects
 
 look' :: GameState -> GameAction
-look' (GameState locs room []) = PrintMessage "Wrong."
 look' (GameState locs room objects) = case getLocation room locs of
 			Just loc -> PrintMessage $ lookAround loc objects
 			Nothing -> PrintMessage $ printf "Some error: no location on room %s was found." (show room)

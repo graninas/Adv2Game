@@ -52,8 +52,6 @@ initGameState = GameState {
 	gsObjects = initialObjects
 }
 
-	
-
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []
 parseCommand str = case parseCmd str of

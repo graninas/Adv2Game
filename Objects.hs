@@ -172,7 +172,6 @@ showObjects pref lFuncDescr boundStrs xs = snd pref ++ (showLeftBracket boundStr
 
 -- Перечисляет объекты в виде [списка]. Если не передана строка Intro, будет подставлена строка по умолчанию.
 describeObjects :: IntroString -> Objects -> String
-describeObjects _ [] = "TEST."
 describeObjects [] os = (showObjects ([], "\nThere are some objects here: ") standartObjectShowingF standartBoundStrs os) ++ unwords(map showContents os)
 describeObjects str os = (showObjects ([], str) standartObjectShowingF standartBoundStrs os) ++ unwords(map showContents os)
 
