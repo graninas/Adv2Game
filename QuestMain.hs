@@ -95,6 +95,7 @@ loadGame str = case reads str of
 
 main :: IO ()
 main = do
+	putStrLn "Advanced Adventure Game (Adv2Game).\n"
 	str <- catch (readFile "save.a2g") (\_ -> return [])
 	(startGameState, msg) <- case str of
 			[] -> return (initGameState, "Starting new game...\n")
