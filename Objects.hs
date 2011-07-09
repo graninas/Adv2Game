@@ -19,6 +19,7 @@ homeLighter = Object "Lighter" NoRoom
 homeDiary = Object "Diary" NoRoom
 homeDrawer = Container "Drawer" Closed [homeDiary, homeLighter] NoRoom
 bag = Container "Bag" Opened [] InventoryRoom
+superMagicGreatArtifact = Object "Super Magic Unique Artifact" NoRoom
 
 objectDescription' :: Object -> String
 objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
@@ -30,6 +31,7 @@ objectDescription' obj  | obj == homeUmbrella1 = "Nice red mechanic Umbrella."
 						| obj == homeTable = "Good wooden table with drawer."
 						| obj == homeDiary = "Your diary."
 						| obj == ropeOnHook = "Rope on hook looks tight."
+						| obj == superMagicGreatArtifact = "Unbelievable! You found great artifact!"
 						| otherwise = printf "There is nothing special about %s." (showObject obj)
 
 objectPickupFailMessage' :: Object -> String
@@ -93,7 +95,7 @@ pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventor
 		   | otherwise = case isPickupable obj of
 					True -> (Just (obj {objectRoom = InventoryRoom}), successPickupingObjectMsg obj)
 					False -> (Nothing, failurePickupingObjectMsg obj)
-					
+
 weld :: Object -> Object -> MaybeWeldedObject
 weld o1 o2 = (foldr1 (<|>) welders) [o1, o2]
 
@@ -106,6 +108,8 @@ roomObjects :: Room -> Objects -> [Object]
 roomObjects room obects = let filtered = filter (\x -> objectRoom x == room) obects in
 	filtered ++ objectsContents filtered
 
+inventoryObjects :: Objects -> Objects
+inventoryObjects = roomObjects InventoryRoom
 
 ----------- Messages, Errors ------------
 -- f :: Object -> String
@@ -191,7 +195,7 @@ investigateObjects str = showObjects ([], str) ((\x _ -> printf "\n%s: %s" (show
 
 -- Перечисляет объекты инвентаря в виде [списка]. Если инвентарь пуст, так и сообщает.
 showInventory :: Objects -> String
-showInventory os =  showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs os
+showInventory os =  showObjects ("No objects in your inventory.", "You have: ") standartObjectShowingF standartBoundStrs (inventoryObjects os)
 
 -- Перечисляет объекты в виде пронумерованного списка, начинающегося с 0.
 enumerateObjects :: IntroString -> Objects -> String

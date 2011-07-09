@@ -10,20 +10,23 @@ import qualified Data.Map as M
 
 locationPaths' :: Room -> Paths
 locationPaths' room = case room of
-	Home -> [Path North Friend'sYard, Path South Home]
-	Friend'sYard -> [Path South Home, Path West Corridor]
+	Home -> [Path North Friend'sYard, Path South Home, Path West TestLoseRoom, Path East Garden]
+	Friend'sYard -> [Path South Home, Path West Garden, Path North TestWinRoom]
+	Garden -> [Path West Home]
 	_ -> []
 
 locationShortDescription' :: Location -> String
 locationShortDescription' (Location room _ _) = case room of
 	Home -> "You are standing in the middle room at the wooden table."
 	Friend'sYard -> "This is big light room."
+	Garden -> "You are in the friend's garden. Garden looks well."
 	_ -> "Invalid room."
 
 locationLongDescription' :: Location -> String
 locationLongDescription' (Location room _ _) = case room of
 	Home -> "Room looks nice: small, clean, beauty. There is phone and papers on the big wooden table.  It is rainy and dark behind the window. A lightnings beat to the lighthouse on a mountain."
 	Friend'sYard -> "Friend'sYard is the big nice place with many lamps on the walls."
+	Garden -> "This is friend's garden. You see very nice trees and flower beds."
 	_ -> "Invalid room."
 
 ----------- Messages, Errors ------------

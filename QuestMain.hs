@@ -5,6 +5,7 @@ import Objects
 import Locations
 import Tools
 import GameAction
+import GameStateEvents
 import Control.Monad.State (get, gets, StateT(..), evalStateT, 
                             put, MonadState(..), liftIO)
 import Char(isDigit, isAlpha)
@@ -13,6 +14,10 @@ import qualified Data.Map as M
 
 saveGame :: GameState -> GS ()
 saveGame curGS = liftIO $(writeFile "save.a2g" (show curGS))
+
+loadGame str = case reads str of
+				[(x,"")] -> Just x
+				_ -> Nothing
 
 helpMessage :: String
 helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
@@ -35,7 +40,8 @@ helpMessage = unlines ["Welcome to Adv2Game: Advanced Adventure Game!",
 initialObjects :: Objects
 initialObjects = bag : 	
 				 map (\x -> x {objectRoom = Home}) [homeDrawer, homePhone1, homeUmbrella1, homeTable, rope, homeHook, homeUmbrella2] ++
-				 map (\x -> x {objectRoom = Friend'sYard}) [homePhone2]
+				 map (\x -> x {objectRoom = Friend'sYard}) [homePhone2] ++ 
+				 map (\x -> x {objectRoom = Garden}) [superMagicGreatArtifact]
 				 
 	
 initialLocations = M.fromList [
@@ -52,6 +58,17 @@ initGameState = GameState {
 	gsObjects = initialObjects
 }
 
+initGameStateEventFuncs :: GameStateEventFuncs
+initGameStateEventFuncs = [eventByLocation, winByObject]
+
+
+f1 <^> f2 = \gs -> case f1 gs of
+						NoEvent -> f2 gs
+						ev -> ev
+
+gameStateEvent :: GameStateEventFuncs -> GameState -> GameStateEvent
+gameStateEvent funcs = (foldr (<^>) (\_ -> NoEvent) funcs)
+
 parseCommand :: String -> Either String Command
 parseCommand [] = Left []
 parseCommand str = case parseCmd str of
@@ -67,6 +84,7 @@ run' inputStr maybeInputCmd curGS = do
 				Right New -> StartNewGame
 				Right (Quit str) -> QuitGame str
 				Right (Walk dir) -> tryWalk' dir curGS
+				Right (Go dir) -> tryGo' dir curGS
 				Right Inventory -> showInventory' curGS
 				Right Look -> look' curGS
 				Right (Examine obj) -> tryExamineObject' obj curGS
@@ -80,18 +98,23 @@ run' inputStr maybeInputCmd curGS = do
 run :: InputString -> Maybe InputCommand -> GS ()
 run inputStr oldInputCmd = do
 	curGS <- get
-	gameAction <- return (run' inputStr oldInputCmd curGS)
-	case gameAction of
-		QuitGame outMsg -> ioOutMsgGS outMsg >> return ()
-		PrintMessage outMsg -> ioOutMsgGS outMsg >> run "" Nothing
-		ReadUserInput -> ioInMsgGS >>= \x -> run x Nothing
-		ReadMessagedUserInput inOutString newInputCmd -> ioOutMsgGS inOutString >> ioInMsgGS >>= \x -> run x (Just newInputCmd)
-		SaveState newState outMsg -> ioOutMsgGS outMsg >> put newState >> return newState >>= saveGame >> run "" Nothing
-		StartNewGame -> put initGameState >> ioOutMsgGS "Starting new game...\n" >> run "Look" Nothing
-
-loadGame str = case reads str of
-				[(x,"")] -> Just x
-				_ -> Nothing
+	gsEvent <- return (gameStateEvent initGameStateEventFuncs curGS)
+	case gsEvent of
+		WinEvent -> do
+						ioOutMsgGS winMessage
+						return ()
+		LoseEvent -> do
+						ioOutMsgGS loseMessage
+						return ()
+		_ -> do
+				gameAction <- return (run' inputStr oldInputCmd curGS)
+				case gameAction of
+					QuitGame outMsg -> ioOutMsgGS outMsg >> return ()
+					PrintMessage outMsg -> ioOutMsgGS outMsg >> run "" Nothing
+					ReadUserInput -> ioInMsgGS >>= \x -> run x Nothing
+					ReadMessagedUserInput inOutString newInputCmd -> ioOutMsgGS inOutString >> ioInMsgGS >>= \x -> run x (Just newInputCmd)
+					SaveState newState outMsg -> ioOutMsgGS outMsg >> put newState >> return newState >>= saveGame >> run "" Nothing
+					StartNewGame -> put initGameState >> ioOutMsgGS "Starting new game...\n" >> run "Look" Nothing
 
 main :: IO ()
 main = do

@@ -32,10 +32,13 @@ invP  = ("I", ["Inventory"], \_ -> Inventory)
 takeP = ("T", ["Take", "oName"], \(x:_) -> Take x)
 weldP = ("W", ["Weld", "oName", "oName"], \(x:y:_) -> Weld x y)
 goP   = ("G", ["Go", "Direction"], \(x:_) -> Go x)
+walkP = ([],  ["Walk", "Direction"], \(x:_) -> case reads x of
+												[(dir, _)] -> Walk dir
+												_ -> NoCommand)
 newP  = ([],  ["New"], \_ -> New)
 quitP = ("Q", ["Quit"], \_ -> Quit "Be seen you...")
 
-cmdParsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, goP, newP, quitP]
+cmdParsers = map cmdP [lookP, helpP, openP, examP, invP, takeP, weldP, walkP, goP, newP, quitP]
 
 parseCmd :: String -> Maybe Command
 parseCmd [] = Nothing
@@ -98,12 +101,10 @@ tryOpen o gs@(GameState _ _ objects) = case open o of
 tryExamineObject :: Object -> GameAction
 tryExamineObject obj = PrintMessage (objectDescription' obj)
 
-
-
-
+-------------------------------------------------------------------------
 
 showInventory' :: GameState -> GameAction
-showInventory' (GameState _ _ objects) = PrintMessage $ showInventory $ roomObjects InventoryRoom objects
+showInventory' (GameState _ _ objects) = PrintMessage $ showInventory objects
 
 look' :: GameState -> GameAction
 look' (GameState locs room objects) = case getLocation room locs of
@@ -111,7 +112,15 @@ look' (GameState locs room objects) = case getLocation room locs of
 			Nothing -> PrintMessage $ printf "Some error: no location on room %s was found." (show room)
 
 tryWalk' :: Direction -> GameState -> GameAction
-tryWalk' dir curGS = undefined
+tryWalk' dir curGS@(GameState locs room _) =
+			case getLocation room locs of
+				Just loc -> tryWalk loc dir curGS
+				Nothing -> PrintMessage $ printf "Some error: no location on room %s was found." (show room)
+
+tryGo' :: String -> GameState -> GameAction
+tryGo' dirStr curGS = case reads dirStr of
+					[(dir, _)] -> tryWalk' dir curGS
+					_ -> PrintMessage $ printf "Some error: can not parse direction %s." dirStr
 
 tryTake' :: ObjectName -> GameState -> GameAction
 tryTake' objN gs@(GameState _ room objects) =

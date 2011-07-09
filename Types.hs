@@ -6,7 +6,7 @@ import qualified Data.Map as M
 type MaybeSomething a = (Maybe a, String)
 
 
-data Room = InventoryRoom | Home | Friend'sYard | Corridor | NoRoom
+data Room = InventoryRoom | Home | Friend'sYard | Garden | NoRoom | TestWinRoom | TestLoseRoom
 	deriving (Eq, Show, Read, Ord)
 
 type Rooms = [Room]
@@ -82,6 +82,7 @@ data Command =
 			| New
 			| Quit String
 			| Help
+			| NoCommand
 	deriving (Eq, Show, Read)
 
 data InputCommand =
@@ -99,6 +100,14 @@ data GameAction =
 				| ReadMessagedUserInput InputOutputString InputCommand
 				| SaveState GameState OutputMessage
 				| StartNewGame
+
+data GameStateEvent =
+				WinEvent
+				| LoseEvent
+				| NoEvent
+
+type GameStateEventFunc = GameState -> GameStateEvent
+type GameStateEventFuncs = [GameStateEventFunc]
 
 class Container a where
 	open :: a -> MaybeSomething a
