@@ -100,8 +100,10 @@ data GameAction =
 				| SaveState GameState OutputMessage
 				| StartNewGame
 
-class Openable a where
+class Container a where
 	open :: a -> MaybeSomething a
 	close :: a -> MaybeSomething a
 	showStated :: a -> String
 	showContents :: a -> String
+	isOpen :: a -> Bool
+	contents :: a -> [a]

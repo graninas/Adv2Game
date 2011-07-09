@@ -97,8 +97,14 @@ pickup obj | objectRoom obj == InventoryRoom = (Nothing, objectAlreadyInInventor
 weld :: Object -> Object -> MaybeWeldedObject
 weld o1 o2 = (foldr1 (<|>) welders) [o1, o2]
 
+objectsContents :: Objects -> Objects
+objectsContents [] = []
+objectsContents (o:os) | isOpen o = contents o ++ objectsContents os
+					   | otherwise = objectsContents os
+
 roomObjects :: Room -> Objects -> [Object]
-roomObjects room = filter (\x -> objectRoom x == room)
+roomObjects room obects = let filtered = filter (\x -> objectRoom x == room) obects in
+	filtered ++ objectsContents filtered
 
 
 ----------- Messages, Errors ------------
@@ -118,7 +124,7 @@ successOpeningObjectMsg obj [] = "Opened."
 successOpeningObjectMsg obj (o:[]) = printf "Opening %s reveals %s." (showObject obj) (showObject o)
 successOpeningObjectMsg obj os = describeObjects (printf "Opening %s reveals some objects: " (showObject obj)) os
 
-instance Openable Object where
+instance Container Object where
 	open obj@(Container _ Opened _ _) = (Nothing, alreadyOpenError obj)
 	open obj@(Container _ Closed _ _) = (Just $ obj {objectContainerState = Opened}, successOpeningObjectMsg obj (objectContents obj))
 	open obj = (Nothing, cannotBeOpenedError obj)
@@ -127,8 +133,12 @@ instance Openable Object where
 	close obj = (Nothing, cannotBeClosedError obj)
 	showStated obj@(Container _ Opened _ _) = "(opened) " ++ showObject obj
 	showStated obj = showObject obj
-	showContents obj@(Container _ Opened cont@(x:xs) _) = describeObjects (printf "\nThe %s contains " (showObject obj)) cont
+	showContents obj@(Container _ Opened cont _) = describeObjects (printf "\nThe %s contains " (showObject obj)) cont
 	showContents _ = []
+	isOpen (Container _ Opened _ _) = True
+	isOpen _ = False
+	contents obj@(Container _ _ cont _) = cont
+	contents _ = []
 	
 instance Eq Object where
 	o1 == o2 = objectName o1 == objectName o2
